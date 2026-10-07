@@ -6,6 +6,10 @@ import { createServer } from 'node:net';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import WebSocket from 'ws';
+import jsQR from 'jsqr';
+const sourceRequire = createRequire(import.meta.url);
+const qrRequire = createRequire(sourceRequire.resolve('qrcode'));
+const { PNG } = qrRequire('pngjs');
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const directory = join(root, 'dist/windows');
 const require = createRequire(join(directory, 'companion.cjs'));
@@ -55,12 +59,22 @@ try {
   const endpoint = state.addresses.find(entry => entry.address === state.selectedAddress).endpoint;
   const origin = state.localWebUrl;
   assert.equal(state.virtualController, 'READY');
+  const link = new URL(state.pairingUrl);
+  assert.equal(link.pathname, '/connect');
+  const payload = JSON.parse(Buffer.from(link.searchParams.get('data'), 'base64url').toString('utf8'));
+  assert.equal(payload.version, 1); assert.equal(payload.host, state.selectedAddress); assert.equal(payload.port, port);
+  assert.equal('ws://' + payload.host + ':' + payload.port + '/?token=' + payload.token, endpoint);
+  const png = PNG.sync.read(Buffer.from(state.qrPngBase64, 'base64'));
+  const decoded = jsQR(new Uint8ClampedArray(png.data), png.width, png.height);
+  assert.equal(decoded?.data, state.pairingUrl, 'Actual QR must decode to the complete connection URL');
+  const route = await fetch(origin + link.pathname + link.search);
+  assert.equal(route.status, 200); assert.match(await route.text(), /manifest.webmanifest/);
   const page = await fetch(origin); assert.equal(page.status, 200);
   assert.match(await page.text(), /manifest.webmanifest/);
   await denied(endpoint, 'https://unauthorized.example');
   const invalid = new URL(endpoint); invalid.searchParams.set('token', 'wrong');
   await denied(invalid.href, origin);
-  socket = new WebSocket(endpoint, { origin }); await waitOpen(socket);
+  socket = new WebSocket(endpoint, { origin: link.origin }); await waitOpen(socket);
   socket.send(JSON.stringify({ type: 'controller-state', sequence: 0, timestamp: Date.now(),
     axes: { throttle: .5, yaw: 0, pitch: 0, roll: 0 } }));
   await new Promise(resolve => setTimeout(resolve, 50));
@@ -72,5 +86,5 @@ try {
     const timer = setTimeout(() => reject(new Error('Shutdown timeout')), 5000); timer.unref();
   })]);
   assert.equal(code, 0); assert.ok(stopped);
-  console.log('PASS: native window status, packaged Koffi, PWA assets, LAN authorization, WebSocket, shutdown.');
+  console.log('PASS: native window, decoded QR, pairing route, packaged Koffi, PWA, LAN authorization, WebSocket, shutdown.');
 } finally { clearTimeout(startup); socket?.terminate(); if (child.exitCode === null) child.kill(); }

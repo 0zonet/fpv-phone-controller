@@ -4,6 +4,8 @@ Monorepo con Angular 20 standalone en `phone`, companion Node.js/TypeScript en `
 
 Para usuarios finales: [USER_README.md](USER_README.md). Para empaquetar, publicar en Vercel y probar un Windows sin Node: [Distribución](docs/DISTRIBUTION.md).
 
+El companion distribuible muestra un QR que abre /connect en la PWA pública y conecta automáticamente usando IP, puerto y clave temporal. Protocolo, pruebas y pasos de publicación: [Pairing QR](docs/PAIRING.md). El servidor de desarrollo en consola mantiene la conexión manual.
+
 En Windows x64 con Node 24: `npm run build:desktop` genera la app nativa con runtime incluido; `npm run package:windows` genera `dist/FPVPhoneControllerSetup.exe`. `npm run test:package` verifica el paquete aislado con un driver fake. El dominio de distribución se configura en `distribution.config.json`, actualmente https://fpv.brycofre.com; PWA_URL permite sobrescribirlo al compilar.
 
 Antes de ejecutar desktop, instala y configura manualmente el driver firmado vJoy 2.2.2.0 y su SDK x64. Sigue [la guía de instalación y verificación en joy.cpl](desktop/README.md). Después de verificar los cuatro ejes en Windows, sigue [la guía de calibración y primera prueba en Uncrashed](docs/UNCRASHED.md).

@@ -10,7 +10,7 @@ export function servePhone(directory: string) {
     let file: string;
     try {
       const path = decodeURIComponent(new URL(request.url ?? '/', 'http://localhost').pathname);
-      file = resolve(base, '.' + (path === '/' ? '/index.html' : path));
+      file = resolve(base, '.' + (path === '/' || path === '/connect' ? '/index.html' : path));
       if (!file.startsWith(base + sep)) { response.writeHead(403).end(); return; }
     } catch { response.writeHead(400).end(); return; }
     void readFile(file).then(content => {

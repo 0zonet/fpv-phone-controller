@@ -3,6 +3,7 @@ import { cp, mkdir, readFile, writeFile, copyFile, access } from 'node:fs/promis
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 if (process.platform !== 'win32' || process.arch !== 'x64') throw new Error('Windows x64 is required for this native build.');
 if (Number(process.versions.node.split('.')[0]) !== 24) throw new Error('Build the distribution with Node 24 x64.');
@@ -50,5 +51,11 @@ for (const [source, target] of [['ws/LICENSE', 'ws.txt'], ['koffi/LICENSE.txt', 
 const nodeLicense = await fetch('https://raw.githubusercontent.com/nodejs/node/' + process.version + '/LICENSE');
 if (!nodeLicense.ok) throw new Error('Cannot retrieve Node.js license for the bundled runtime.');
 await writeFile(join(output, 'licenses/node.txt'), await nodeLicense.text());
+const sourceRequire = createRequire(import.meta.url);
+const qrRequire = createRequire(sourceRequire.resolve('qrcode'));
+for (const name of ['qrcode', 'pngjs', 'dijkstrajs']) {
+  const packagePath = name === 'qrcode' ? sourceRequire.resolve('qrcode/package.json') : qrRequire.resolve(name + '/package.json');
+  await copyFile(join(dirname(packagePath), name === 'dijkstrajs' ? 'LICENSE.md' : 'LICENSE'), join(output, 'licenses', name + '.txt'));
+}
 console.log('Windows app built: ' + output);
 if (!pwaUrl) console.log('LOCAL PREVIEW: build with PWA_URL=https://your-domain.vercel.app when published.');
