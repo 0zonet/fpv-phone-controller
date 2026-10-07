@@ -1,0 +1,65 @@
+<main [class.has-panel]="showConnection() || debugOpen()">
+  <header class="toolbar">
+    <div class="brand">FPV <span>MODE 2</span></div>
+    <app-connection-status [status]="transport.status()" />
+    <nav aria-label="Opciones del mando">
+      <button class="icon-button" type="button" aria-label="Conexión al PC" title="Conexión al PC"
+        [attr.aria-expanded]="showConnection()" aria-controls="connection-panel" [class.selected]="settingsOpen()"
+        (click)="settingsOpen.set(!settingsOpen())"><app-controller-icon name="settings" /></button>
+      <button class="icon-button" type="button" aria-label="Ver diagnóstico" title="Diagnóstico"
+        [attr.aria-expanded]="debugOpen()" aria-controls="debug-panel" [class.selected]="debugOpen()"
+        (click)="debugOpen.set(!debugOpen())"><app-controller-icon name="debug" /></button>
+      <button class="icon-button" type="button" [attr.aria-label]="fullscreen() ? 'Salir de pantalla completa' : 'Pantalla completa'"
+        [title]="fullscreen() ? 'Salir de pantalla completa' : 'Pantalla completa'" (click)="toggleFullscreen()">
+        <app-controller-icon [name]="fullscreen() ? 'collapse' : 'expand'" /></button>
+    </nav>
+  </header>
+
+  @if (showConnection()) {
+    <form id="connection-panel" class="connection-panel" (submit)="$event.preventDefault(); connect()">
+      <label for="pc-address">Conectar al PC</label>
+      <div class="connection-row">
+        <input #pcAddress id="pc-address" type="url" required autocomplete="url" autocapitalize="off" spellcheck="false"
+          placeholder="ws://IP del PC:8080" [value]="address()" (input)="updateAddress(pcAddress.value)"
+          [disabled]="transport.status() === 'connecting' || transport.status() === 'connected'" />
+        @if (transport.status() === 'connected' || transport.status() === 'connecting') {
+          <button class="secondary" type="button" (click)="disconnect()">
+            <app-controller-icon name="close" />{{ transport.status() === 'connecting' ? 'Cancelar' : 'Desconectar' }}
+          </button>
+        } @else {
+          <button class="primary" type="submit"><app-controller-icon name="connect" />Conectar</button>
+        }
+      </div>
+      @if (transport.errorMessage() && transport.status() === 'error') {
+        <p class="error-message" role="alert">{{ transport.errorMessage() }}</p>
+      }
+    </form>
+  }
+
+  <section class="sticks" aria-label="Controles de vuelo">
+    <article class="stick-card">
+      <div class="stick-heading"><h1>Yaw <span>/ Throttle</span></h1><output class="power">{{ throttlePercent() }}<small>%</small></output></div>
+      <div class="power-track" role="meter" aria-label="Throttle" aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="throttlePercent()">
+        <span [style.width.%]="throttlePercent()"></span>
+      </div>
+      <app-virtual-stick label="Yaw y throttle" [xValue]="controller.leftStick().x" [yValue]="controller.leftStick().y"
+        [xReturnToCenter]="true" [yReturnToCenter]="false" [invertY]="true" (valueChange)="controller.setLeftStick($event)" />
+    </article>
+    <article class="stick-card">
+      <div class="stick-heading"><h2>Roll <span>/ Pitch</span></h2><span class="axis-hint" aria-hidden="true">↔ ↕</span></div>
+      <div class="power-track muted" aria-hidden="true"></div>
+      <app-virtual-stick label="Roll y pitch" [xValue]="controller.rightStick().x" [yValue]="controller.rightStick().y"
+        [xReturnToCenter]="true" [yReturnToCenter]="true" [invertY]="true" (valueChange)="controller.setRightStick($event)" />
+    </article>
+  </section>
+
+  @if (debugOpen()) {
+    <section id="debug-panel" class="debug-panel" aria-label="Diagnóstico">
+      <div class="debug-heading"><span>Diagnóstico · PC</span><app-connection-status [status]="transport.status()" /></div>
+      <app-controller-debug [state]="controller.state()" />
+      <div class="debug-heading"><span>{{ transport.packetsPerSecond() }} paquetes/s</span><span>SEQ {{ transport.lastSequence() ?? '—' }}</span></div>
+      <p>Throttle conserva su posición. Los demás ejes vuelven al centro.</p>
+    </section>
+  }
+  @if (fullscreenMessage()) { <p class="notice" role="status">{{ fullscreenMessage() }}</p> }
+</main>

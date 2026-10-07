@@ -1,0 +1,4 @@
+dl { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 0; }
+dl div { text-align: center; } dt { color: #a3b7c8; font-size: .75rem; }
+dd { margin: 4px 0 0; font-size: 1.1rem; font-variant-numeric: tabular-nums; }
+@media (max-width: 380px) { dl { gap: 8px; } dd { font-size: .9rem; } }

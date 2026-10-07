@@ -1,0 +1,14 @@
+{
+  "buildCommand": "npm --prefix phone run build",
+  "outputDirectory": "phone/dist/phone/browser",
+  "installCommand": "npm ci",
+  "rewrites": [{ "source": "/((?!.*\\.).*)", "destination": "/index.html" }],
+  "headers": [
+    { "source": "/ngsw.json", "headers": [{ "key": "Cache-Control", "value": "no-store" }] },
+    { "source": "/ngsw-worker.js", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
+    { "source": "/(.*)", "headers": [
+      { "key": "X-Content-Type-Options", "value": "nosniff" },
+      { "key": "Referrer-Policy", "value": "no-referrer" }
+    ] }
+  ]
+}

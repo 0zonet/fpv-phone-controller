@@ -1,0 +1,21 @@
+{
+  "name": "@fpv/desktop",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/desktop/src/server.js",
+    "test": "tsx --test src/server.test.ts src/models/*.spec.ts src/websocket/*.spec.ts src/controller/*.spec.ts src/companion.spec.ts src/config.spec.ts src/network/*.spec.ts"
+  },
+  "dependencies": {
+    "ws": "^8.18.0",
+    "koffi": "^3.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/ws": "^8.18.0",
+    "tsx": "^4.20.0",
+    "typescript": "~5.9.0"
+  }
+}

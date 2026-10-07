@@ -1,0 +1,10 @@
+<div #surface class="stick" role="group" tabindex="0" [attr.aria-label]="label()"
+  aria-description="Usa el tacto o las flechas del teclado. Escape devuelve los ejes configurados al centro."
+  [class.active]="active()"
+  (pointerdown)="onPointerDown($event, surface)" (pointermove)="onPointerMove($event)"
+  (pointerup)="onPointerUp($event)" (pointercancel)="onPointerCancel($event)"
+  (lostpointercapture)="onPointerCancel($event)" (keydown)="onKeyDown($event)" (keyup)="onKeyUp($event)">
+  <span class="cross horizontal" aria-hidden="true"></span>
+  <span class="cross vertical" aria-hidden="true"></span>
+  <span class="knob" aria-hidden="true" [style.left.%]="visual().x" [style.top.%]="visual().y"></span>
+</div>
