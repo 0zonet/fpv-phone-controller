@@ -1,6 +1,6 @@
 # Desktop companion: vJoy
 
-La tercera etapa convierte ControllerState en cuatro ejes de un joystick virtual de Windows. No implementa botones, ARM, AUX, expo, rates, vibración ni perfiles. La siguiente comprobación es joy.cpl; todavía no pasar a simuladores.
+El companion convierte los cuatro ejes y ocho botones genéricos en entradas del mismo dispositivo vJoy. Conserva la calibración de ejes y no implementa expo, rates, vibración ni perfiles. Ver docs/VIRTUAL_BUTTONS.md para botones y pruebas en joy.cpl antes del simulador.
 
 ## Elección del driver
 
@@ -32,7 +32,7 @@ Ni el proyecto ni sus tests ejecutan instaladores, cambian firmas de Windows o c
 3. Reinicia si el instalador lo requiere.
 4. Abre **Configure vJoy / vJoyConf** y selecciona **Device 1**.
 5. Habilita el dispositivo y sus ejes **X, Y, Z y Slider** (primer slider, HID 0x36). Aplica la configuración. Este companion exige esos cuatro ejes; no cambia automáticamente a Rx.
-6. Los botones/POVs que puedan aparecer no son utilizados por el companion. No configures FFB para esta etapa.
+6. Habilita al menos ocho botones. El companion usa Buttons 1..8; no utiliza POVs ni FFB.
 7. Asegura que otra aplicación feeder no tenga adquirido Device 1.
 8. Si la DLL no está en la instalación habitual, extrae el SDK de la misma release y localiza su DLL x64. Define su ruta absoluta:
 

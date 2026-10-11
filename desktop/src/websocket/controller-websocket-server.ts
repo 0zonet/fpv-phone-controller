@@ -15,7 +15,7 @@ export interface ControllerServerOptions {
   reportMs?: number;
   heartbeatMs?: number;
   maxPhoneClients?: number;
-  onState?: (state: ControllerAxes) => void;
+  onState?: (state: ControllerAxes, buttons: readonly boolean[]) => void;
   onPhoneConnected?: () => void;
   onPhoneDisconnected?: () => void;
   onControllerError?: (error: unknown) => void;
@@ -59,7 +59,7 @@ export function createControllerWebSocketServer(options: ControllerServerOptions
       if (binary || !isControllerMessage(message)) { socket.close(1008, 'Invalid controller-state'); return; }
       if (!client.metrics.receive(message, performance.now())) return;
       try {
-        options.onState?.(message.axes);
+        options.onState?.(message.axes, message.buttons ?? []);
       } catch (error) {
         socket.close(1011, 'Virtual controller update failed'); options.onControllerError?.(error);
       }

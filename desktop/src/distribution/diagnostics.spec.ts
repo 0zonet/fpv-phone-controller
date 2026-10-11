@@ -12,6 +12,7 @@ test('actionable startup errors never expose technical stacks', () => {
     [new Error('vJoyInterface.dll not found'), 'DRIVER_MISSING'],
     [new Error('vJoy device 1 is missing.'), 'DEVICE_UNAVAILABLE'],
     [new Error('vJoy axis roll is missing.'), 'DEVICE_UNAVAILABLE'],
+    [new Error('vJoy buttons are missing.'), 'DEVICE_UNAVAILABLE'],
     [new Error('vJoy driver and SDK DLL versions do not match.'), 'DRIVER_MISMATCH'],
     [Object.assign(new Error('private details'), {code:'EACCES'}), 'NETWORK_PERMISSION'],
     [new Error('private details'), 'STARTUP_FAILED']

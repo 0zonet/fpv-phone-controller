@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Desktop — Advanced</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&amp;family=Doto:wght@700;800;900&amp;family=Martian+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0D0D12}
+.ib{transition:background-color .15s ease}
+.ib:hover{background:rgba(255,255,255,0.1) !important}
+.wc:hover{background:rgba(255,255,255,0.08) !important}
+.wx:hover{background:#C42B1C !important;color:#FFFFFF !important}
+button:focus-visible{outline:2px solid #F2F2F6;outline-offset:2px}
+</style>
+</helmet>
+<div style="position: relative; width: 440px; height: 640px; overflow: hidden; background: #0D0D12; color: #F2F2F6; font-family: 'Urbanist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; display: flex; flex-direction: column">
+
+<div aria-hidden="true" style="position: absolute; left: -20%; right: -20%; bottom: -30%; height: 60%; filter: blur(70px); opacity: 0.22; background: radial-gradient(35% 55% at 20% 70%, #FF8AD8, transparent 70%), radial-gradient(40% 60% at 55% 80%, #8B7CFF, transparent 70%), radial-gradient(35% 55% at 88% 70%, #6E9BFF, transparent 70%)"></div>
+
+<div style="position: relative; height: 40px; flex: none; display: flex; align-items: center; padding-left: 14px; gap: 8px">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="#F2F2F6" aria-hidden="true"><path d="M12 2c.6 4.9 3.1 7.4 8 8-4.9.6-7.4 3.1-8 8-.6-4.9-3.1-7.4-8-8 4.9-.6 7.4-3.1 8-8Z"></path></svg>
+<span style="font-size: 13px; font-weight: 600">FPV Phone Controller</span>
+<span style="flex: 1"></span>
+<button class="wc" aria-label="Minimize" style="width: 46px; height: 40px; border: 0; background: transparent; color: #C9C9D4; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6h10" stroke="currentColor" stroke-width="1"></path></svg></button>
+<button class="wx" aria-label="Close" style="width: 46px; height: 40px; border: 0; background: transparent; color: #C9C9D4; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M1.5 1.5l9 9M10.5 1.5l-9 9" stroke="currentColor" stroke-width="1"></path></svg></button>
+</div>
+
+<div style="position: relative; flex: 1; box-sizing: border-box; padding: 8px 20px 16px; display: flex; flex-direction: column; gap: 12px">
+
+<div style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 22px; background: rgba(30,30,40,0.62); border: 1px solid rgba(255,255,255,0.08)">
+<span aria-hidden="true" style="width: 10px; height: 10px; border-radius: 50%; background: #4ADE80; box-shadow: 0 0 0 4px rgba(74,222,128,0.15)"></span>
+<div style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 15px; font-weight: 700">Phone connected</span>
+<span style="font-size: 12px; color: #9C9CAD">Controller and server ready</span>
+</div>
+<span><span style="font-family: 'Doto', ui-monospace, monospace; font-weight: 900; font-size: 28px; line-height: 1">60</span><span style="font-family: 'Martian Mono', ui-monospace, monospace; font-size: 10px; color: #9C9CAD; margin-left: 4px">pkt/s</span></span>
+</div>
+
+<div style="flex: 1; display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 24px; background: rgba(20,20,28,0.6); border: 1px solid rgba(255,255,255,0.08)">
+<div style="display: flex; align-items: center; justify-content: space-between">
+<span style="font-size: 16px; font-weight: 700">Advanced</span>
+<button class="ib" aria-expanded="true" aria-label="Hide advanced" style="width: 32px; height: 32px; border-radius: 50%; border: 0; background: rgba(255,255,255,0.06); color: #C9C9D4; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"></path></svg></button>
+</div>
+
+<span style="font-family: 'Martian Mono', ui-monospace, monospace; font-size: 9px; letter-spacing: 0.1em; color: #9C9CAD; margin-top: 4px">NETWORK</span>
+<div style="display: flex; flex-direction: column; border-radius: 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06)">
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.06)"><span style="font-size: 13px; color: #C9C9D4">Local IP</span><span style="font-family: 'Martian Mono', ui-monospace, monospace; font-size: 12px">[LOCAL IP]</span></div>
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.06)"><span style="font-size: 13px; color: #C9C9D4">Port</span><span style="font-family: 'Martian Mono', ui-monospace, monospace; font-size: 12px">[PORT]</span></div>
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 6px 6px 6px 14px"><span style="font-size: 13px; color: #C9C9D4">Endpoint</span><span style="flex: 1; min-width: 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: 'Martian Mono', ui-monospace, monospace; font-size: 12px">ws://[LOCAL IP]:[PORT]</span><button class="ib" aria-label="Copy endpoint" style="width: 32px; height: 32px; flex: none; border-radius: 10px; border: 0; background: rgba(255,255,255,0.06); color: #F2F2F6; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2.5"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg></button></div>
+</div>
+
+<span style="font-family: 'Martian Mono', ui-monospace, monospace; font-size: 9px; letter-spacing: 0.1em; color: #9C9CAD; margin-top: 4px">VIRTUAL CONTROLLER</span>
+<div style="display: flex; flex-direction: column; border-radius: 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06)">
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.06)"><span style="font-size: 13px; color: #C9C9D4">vJoy driver</span><span style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600"><span aria-hidden="true" style="width: 6px; height: 6px; border-radius: 50%; background: #4ADE80"></span>Installed</span></div>
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px"><span style="font-size: 13px; color: #C9C9D4">Device</span><span style="font-family: 'Martian Mono', ui-monospace, monospace; font-size: 12px">#1 · 4 axes · 8 buttons</span></div>
+</div>
+
+<div style="margin-top: auto; display: flex; gap: 8px; flex-wrap: wrap">
+<button class="ib" style="height: 36px; padding: 0 12px; border-radius: 999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #F2F2F6; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer">Open logs folder</button>
+<button class="ib" style="height: 36px; padding: 0 12px; border-radius: 999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #F2F2F6; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer">New pairing token</button>
+</div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 8px">
+<button class="ib" style="height: 36px; padding: 0 12px; border-radius: 999px; background: transparent; border: 0; color: #C9C9D4; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer">Show QR</button>
+<span style="flex: 1"></span>
+<span style="font-family: 'Martian Mono', ui-monospace, monospace; font-size: 10px; color: #9C9CAD">v0.4.0-beta.1</span>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":440,"height":640}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

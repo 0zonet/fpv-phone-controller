@@ -72,3 +72,13 @@ test('stop cancela timer y bloquea estados tardíos', async () => {
   session.receive(moving); session.stop(); session.receive({ ...moving, throttle: .1 });
   assert.equal(clock.task, undefined); assert.equal(device.updates.length, 1);
 });
+
+test('failsafe releases every toggle and momentary button on timeout and disconnect', async () => {
+  const { device, clock, session } = await setup();
+  session.receive(moving, Array<boolean>(8).fill(true)); assert.deepEqual(device.buttons, Array(8).fill(true));
+  clock.advance(250); assert.deepEqual(device.buttons, Array(8).fill(false));
+  session.receive(moving, [true, true, true, true]); session.disconnect();
+  assert.deepEqual(device.buttons, Array(8).fill(false));
+  session.receive(moving, [true]); session.receive(moving);
+  assert.deepEqual(device.buttons, Array(8).fill(false)); session.stop();
+});

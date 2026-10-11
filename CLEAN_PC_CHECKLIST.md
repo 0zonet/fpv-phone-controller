@@ -14,6 +14,7 @@ Record product version, Windows edition/build, phone model, Android version, Chr
 - [ ] Scan the QR; Chrome opens the HTTPS PWA. Allow local-network access if prompted. No typing or copying an endpoint is required.
 - [ ] Verify Phone: Connected and usable sticks.
 - [ ] Open Advanced > Test joystick (joy.cpl). Confirm roll X, pitch Y, yaw Z and throttle Slider independently across their ranges.
+- [ ] Enable at least 8 buttons in Configure vJoy. In joy.cpl verify ARM → Button 1, RESET → Button 2 while held, AUX 1/2 → Buttons 3/4. Disconnect with toggles ON and confirm every button releases; reconnect with toggles OFF. Verify button presses and both sticks work simultaneously.
 - [ ] In Uncrashed select vJoy Device, assign by individual axis movement and run Stick calibration. Confirm all four axes are independent.
 - [ ] Stop/lose phone connectivity: verify connection-lost message and failsafe resets the joystick (throttle minimum, other axes center). Lower phone throttle and Retry.
 - [ ] Regenerate QR: verify the previous connection closes, the new QR differs, the new scan connects and the old link no longer authorizes.

@@ -12,6 +12,8 @@ export function loadVJoyNative(path: string) {
   const maximum = library.func('int32_t __cdecl GetVJDAxisMax(uint32_t id, uint32_t axis, _Out_ int32_t *value)');
   const acquire = library.func('int32_t __cdecl AcquireVJD(uint32_t id)');
   const relinquish = library.func('void __cdecl RelinquishVJD(uint32_t id)');
+  const buttonCount = library.func('int32_t __cdecl GetVJDButtonNumber(uint32_t id)');
+  const setButton = library.func('int32_t __cdecl SetBtn(int32_t value, uint32_t id, uint8_t button)');
   const setAxis = library.func('int32_t __cdecl SetAxis(int32_t value, uint32_t id, uint32_t axis)');
   const range = (id: number, axis: number): { min: number; max: number } => {
     const low = [0], high = [0];
@@ -24,6 +26,8 @@ export function loadVJoyNative(path: string) {
     exists: (id: number): boolean => Boolean(exists(id)),
     status: (id: number): number => Number(status(id)),
     axisExists: (id: number, axis: number): boolean => Boolean(axisExists(id, axis)),
+    buttonCount: (id: number): number => Number(buttonCount(id)),
+    setButton: (pressed: boolean, id: number, button: number): boolean => Boolean(setButton(pressed ? 1 : 0, id, button)),
     range, acquire: (id: number): boolean => Boolean(acquire(id)),
     relinquish: (id: number): void => { relinquish(id); },
     setAxis: (value: number, id: number, axis: number): boolean => Boolean(setAxis(value, id, axis)),

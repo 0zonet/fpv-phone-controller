@@ -1,3 +1,5 @@
+import { VirtualButtonComponent } from '../../components/virtual-button/virtual-button.component';
+import { DEFAULT_CONTROLLER_BUTTONS } from '../../../../core/models/controller-button.model';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ControllerIconComponent } from '../../components/controller-icon/controller-icon.component';
 import { environment } from '../../../../../environments/environment';
@@ -14,11 +16,13 @@ import { PwaRuntimeService } from '../../../../core/services/pwa-runtime.service
 @Component({
   selector: 'app-controller-page', standalone: true, changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [ControllerTransmissionService],
-  imports: [VirtualStickComponent, ControllerDebugComponent, ConnectionStatusComponent, ControllerIconComponent],
-  host: { '(document:fullscreenchange)': 'syncFullscreen()' },
+  imports: [VirtualButtonComponent, VirtualStickComponent, ControllerDebugComponent, ConnectionStatusComponent, ControllerIconComponent],
+  host: { '(document:fullscreenchange)': 'syncFullscreen()', '(window:blur)': 'controller.resetButtons()', '(document:visibilitychange)': 'clearHiddenButtons()' },
   templateUrl: './controller-page.component.html', styleUrl: './controller-page.component.css'
 })
 export class ControllerPageComponent {
+  readonly buttonConfigs = DEFAULT_CONTROLLER_BUTTONS;
+  clearHiddenButtons(): void { if (document.hidden) this.controller.resetButtons(); }
   readonly version = PRODUCT_VERSION;
   readonly controller = inject(ControllerStateService);
   readonly transport = inject(ControllerTransportService);
@@ -64,7 +68,7 @@ export class ControllerPageComponent {
     this.transport.connect(address);
     this.settingsOpen.set(false);
   }
-  disconnect(): void { this.transport.disconnect(); }
+  disconnect(): void { this.controller.resetButtons(); this.transport.disconnect(); }
   private readAddress(): string {
     try { const stored = localStorage.getItem('fpv-controller-address'); if (stored) return validEndpoint(stored) ?? ''; } catch { /* Use host fallback. */ }
     return validEndpoint(environment.defaultWebSocketEndpoint) ?? '';

@@ -73,6 +73,12 @@
     </article>
   </section>
 
+  <section class="virtual-buttons" aria-label="Botones del mando">
+    @for (button of buttonConfigs; track button.index) {
+      <app-virtual-button [label]="button.label" [mode]="button.mode" [pressed]="controller.buttons()[button.index]"
+        [disabled]="transport.status() !== 'connected'" (pressedChange)="controller.setButton(button.index, $event)" />
+    }
+  </section>
   @if (debugOpen()) {
     <section id="debug-panel" class="debug-panel" aria-label="Diagnóstico">
       <div class="debug-heading"><span>Diagnóstico · PC · v{{ version }}</span><app-connection-status [status]="transport.status()" [lost]="transport.connectionLost()" /></div>

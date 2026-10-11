@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Desktop — Needs attention</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&amp;family=Doto:wght@700;800;900&amp;family=Martian+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0D0D12}
+.ib{transition:background-color .15s ease}
+.ib:hover{background:rgba(255,255,255,0.1) !important}
+.cta:hover{filter:brightness(1.06)}
+.wc:hover{background:rgba(255,255,255,0.08) !important}
+.wx:hover{background:#C42B1C !important;color:#FFFFFF !important}
+button:focus-visible{outline:2px solid #F2F2F6;outline-offset:2px}
+</style>
+</helmet>
+<div style="position: relative; width: 440px; height: 640px; overflow: hidden; background: #0D0D12; color: #F2F2F6; font-family: 'Urbanist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; display: flex; flex-direction: column">
+
+<div aria-hidden="true" style="position: absolute; left: -20%; right: -20%; bottom: -30%; height: 60%; filter: blur(70px); opacity: 0.18; background: radial-gradient(35% 55% at 20% 70%, #FF8AD8, transparent 70%), radial-gradient(40% 60% at 55% 80%, #8B7CFF, transparent 70%), radial-gradient(35% 55% at 88% 70%, #6E9BFF, transparent 70%)"></div>
+
+<div style="position: relative; height: 40px; flex: none; display: flex; align-items: center; padding-left: 14px; gap: 8px">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="#F2F2F6" aria-hidden="true"><path d="M12 2c.6 4.9 3.1 7.4 8 8-4.9.6-7.4 3.1-8 8-.6-4.9-3.1-7.4-8-8 4.9-.6 7.4-3.1 8-8Z"></path></svg>
+<span style="font-size: 13px; font-weight: 600">FPV Phone Controller</span>
+<span style="flex: 1"></span>
+<button class="wc" aria-label="Minimize" style="width: 46px; height: 40px; border: 0; background: transparent; color: #C9C9D4; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6h10" stroke="currentColor" stroke-width="1"></path></svg></button>
+<button class="wx" aria-label="Close" style="width: 46px; height: 40px; border: 0; background: transparent; color: #C9C9D4; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M1.5 1.5l9 9M10.5 1.5l-9 9" stroke="currentColor" stroke-width="1"></path></svg></button>
+</div>
+
+<div style="position: relative; flex: 1; box-sizing: border-box; padding: 8px 20px 16px; display: flex; flex-direction: column; gap: 14px">
+
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{chips}}" as="c" hint-placeholder-count="3">
+<div style="padding: 10px 12px; border-radius: 16px; background: {{c.bg}}; border: 1px solid {{c.edge}}; display: flex; flex-direction: column; gap: 6px">
+<span style="font-family: 'Martian Mono', ui-monospace, monospace; font-size: 9px; letter-spacing: 0.1em; color: #9C9CAD">{{c.label}}</span>
+<span style="display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: {{c.ink}}"><span aria-hidden="true" style="width: 7px; height: 7px; box-sizing: border-box; border-radius: 50%; background: {{c.dot}}; border: {{c.ring}}"></span>{{c.value}}</span>
+</div>
+</sc-for>
+</div>
+
+<div style="flex: 1; padding: 26px 24px; border-radius: 28px; background: rgba(30,30,40,0.62); border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); display: flex; flex-direction: column; gap: 18px">
+<div style="width: 56px; height: 56px; border-radius: 18px; display: flex; align-items: center; justify-content: center; background: {{tint}}; border: 1px solid {{tintEdge}}; color: {{tone}}">
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 2.6 17.3A2 2 0 0 0 4.3 20h15.4a2 2 0 0 0 1.7-2.7L13.7 3.9a2 2 0 0 0-3.4 0Z"></path><path d="M12 9v4M12 16.5v.01"></path></svg>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-family: 'Martian Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.1em; color: {{tone}}">{{eyebrow}}</span>
+<span style="font-size: 26px; font-weight: 700; letter-spacing: -0.015em; line-height: 1.12">{{title}}</span>
+<span style="font-size: 15px; line-height: 1.5; color: #C9C9D4">{{body}}</span>
+</div>
+<sc-if value="{{hasSteps}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<sc-for list="{{steps}}" as="s" hint-placeholder-count="3">
+<div style="display: flex; align-items: center; gap: 10px; font-size: 14px; color: #C9C9D4"><span style="width: 22px; height: 22px; flex: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); font-family: 'Martian Mono', ui-monospace, monospace; font-size: 10px; color: #F2F2F6">{{s.n}}</span>{{s.t}}</div>
+</sc-for>
+</div>
+</sc-if>
+<div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px">
+<button class="cta" style="height: 52px; border: 0; border-radius: 999px; background: #F2F2F6; color: #121216; font-family: inherit; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer">{{primary}}<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"></path><path d="M8 7h9v9"></path></svg></button>
+<button class="ib" style="height: 44px; border-radius: 999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #F2F2F6; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer">{{secondary}}</button>
+<span style="text-align: center; font-family: 'Martian Mono', ui-monospace, monospace; font-size: 10px; color: #9C9CAD">{{foot}}</span>
+</div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 8px">
+<button class="ib" aria-expanded="false" style="height: 36px; padding: 0 12px; border-radius: 999px; background: transparent; border: 0; color: #C9C9D4; font-family: inherit; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer">Advanced<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button>
+<button class="ib" style="height: 36px; padding: 0 12px; border-radius: 999px; background: transparent; border: 0; color: #C9C9D4; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer">Logs</button>
+<span style="flex: 1"></span>
+<span style="font-family: 'Martian Mono', ui-monospace, monospace; font-size: 10px; color: #9C9CAD">v0.4.0-beta.1</span>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"problem":{"editor":"enum","options":["vjoy","port","network","firewall"],"default":"vjoy","section":"Estado"},"$preview":{"width":440,"height":640}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const p = this.props.problem ?? 'vjoy';
+    const ok = { value: 'Ready', dot: '#4ADE80', ring: '0', ink: '#F2F2F6', bg: 'rgba(255,255,255,0.04)', edge: 'rgba(255,255,255,0.08)' };
+    const wait = { value: 'Waiting', dot: 'transparent', ring: '1.5px solid #9C9CAD', ink: '#C9C9D4', bg: 'rgba(255,255,255,0.04)', edge: 'rgba(255,255,255,0.08)' };
+    const off = { value: 'Paused', dot: 'transparent', ring: '1.5px solid #5B5B6B', ink: '#9C9CAD', bg: 'rgba(255,255,255,0.02)', edge: 'rgba(255,255,255,0.06)' };
+    const warn = (v) => ({ value: v, dot: '#F5C969', ring: '0', ink: '#F5C969', bg: 'rgba(250,190,60,0.1)', edge: 'rgba(250,190,60,0.3)' });
+    const err = (v) => ({ value: v, dot: '#F87171', ring: '0', ink: '#FCA5A5', bg: 'rgba(248,113,113,0.1)', edge: 'rgba(248,113,113,0.35)' });
+    const amber = { tone: '#F5C969', tint: 'rgba(250,190,60,0.1)', tintEdge: 'rgba(250,190,60,0.3)' };
+    const red = { tone: '#FCA5A5', tint: 'rgba(248,113,113,0.1)', tintEdge: 'rgba(248,113,113,0.35)' };
+    const P = {
+      vjoy: Object.assign({ c: [warn('Driver needed'), off, off], eyebrow: 'ONE-TIME SETUP', title: 'Install the vJoy driver',
+        body: 'FPV Phone Controller uses vJoy to show your phone to Windows as a joystick.',
+        steps: [{ n: '1', t: 'Download vJoy from GitHub' }, { n: '2', t: 'Run the installer, then come back' }, { n: '3', t: 'Press Check again' }],
+        primary: 'Download vJoy', secondary: 'Check again', foot: 'Opens BrunnerInnovation/vJoy on GitHub' }, amber),
+      port: Object.assign({ c: [ok, err('Port busy'), off], eyebrow: 'SERVER COULDN’T START', title: 'Another app is using the port',
+        body: 'Close other copies of FPV Phone Controller, or let us pick a free port automatically.',
+        steps: [], primary: 'Use another port', secondary: 'Try again', foot: 'Details are in Logs' }, red),
+      network: Object.assign({ c: [ok, warn('No network'), off], eyebrow: 'NO LOCAL NETWORK', title: 'Connect this PC to Wi‑Fi or Ethernet',
+        body: 'Your phone reaches the PC over your home network. We couldn’t find one.',
+        steps: [], primary: 'Open network settings', secondary: 'Check again', foot: 'Phone and PC must share the same network' }, amber),
+      firewall: Object.assign({ c: [ok, ok, warn('Not reaching')], eyebrow: 'PHONE CAN’T REACH THE PC', title: 'Windows Firewall may be blocking it',
+        body: 'Allow FPV Phone Controller on private networks, then scan the QR again.',
+        steps: [{ n: '1', t: 'Open firewall settings' }, { n: '2', t: 'Allow the app on Private networks' }, { n: '3', t: 'Scan the QR again' }],
+        primary: 'Open firewall settings', secondary: 'Show QR', foot: 'Your network should be set to Private' }, amber)
+    };
+    const v = P[p] || P.vjoy;
+    const labels = ['CONTROLLER', 'SERVER', 'PHONE'];
+    return Object.assign({}, v, {
+      chips: v.c.map((c, i) => Object.assign({ label: labels[i] }, c)),
+      hasSteps: v.steps.length > 0
+    });
+  }
+}
+</script>
+</body>
+</html>

@@ -25,7 +25,7 @@ export async function startCompanion(config: AppConfig, controller: VirtualContr
   const server = createControllerWebSocketServer({
     port: config.websocketPort, host: config.websocketHost, maxPayload: config.maxPayload,
     reportMs: config.reportMs, heartbeatMs: config.heartbeatMs, maxPhoneClients: config.maxPhoneClients, log,
-    onState: state => session.receive(state),
+    onState: (state, buttons) => session.receive(state, buttons),
     getReportedAxes: () => session.axes,
     getControllerMetrics: () => session.sampleMetrics(),
     debug: config.debug,

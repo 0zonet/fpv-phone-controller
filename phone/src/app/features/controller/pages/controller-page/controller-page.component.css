@@ -54,3 +54,7 @@ h1 span, h2 span { color: #8fa7ba; font-weight: 450; }
   .connection-row button { width: 100%; }
 }
 @media (prefers-reduced-motion: no-preference) { button { transition: background .15s, transform .1s; } }
+
+.virtual-buttons { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; flex-shrink:0; }
+@media (orientation:landscape) { main { --stick-size:min(35vw, 51dvh, 410px); } }
+@media (max-width:500px) { .virtual-buttons { grid-template-columns:repeat(2,1fr); } }

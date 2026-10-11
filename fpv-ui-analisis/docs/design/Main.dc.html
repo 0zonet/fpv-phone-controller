@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>FPV — En vuelo</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&amp;family=Doto:wght@700;800;900&amp;family=Martian+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0D0D12}
+.ib,.ab{transition:background-color .15s ease, border-color .15s ease, transform .1s ease}
+.ib:hover{background:rgba(255,255,255,0.1) !important}
+.ab:active{transform:scale(0.97)}
+.knob{transition:left .18s cubic-bezier(.3,1.4,.5,1), top .18s cubic-bezier(.3,1.4,.5,1)}
+.knob.drag{transition:none}
+.base{touch-action:none;cursor:grab}
+button:focus-visible{outline:2px solid #F2F2F6;outline-offset:2px}
+@media (prefers-reduced-motion: reduce){.knob,.ib,.ab{transition:none}}
+</style>
+</helmet>
+<div style="position: relative; width: 900px; height: 416px; overflow: hidden; background: #0D0D12; color: #F2F2F6; font-family: 'Urbanist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; user-select: none">
+
+<div aria-hidden="true" style="position: absolute; left: -10%; right: -10%; bottom: -55%; height: 90%; filter: blur(70px); opacity: {{glow}}; background: radial-gradient(30% 50% at 18% 50%, #FF8AD8, transparent 70%), radial-gradient(34% 56% at 50% 60%, #8B7CFF, transparent 70%), radial-gradient(30% 50% at 84% 50%, #6E9BFF, transparent 70%); pointer-events: none"></div>
+
+<header style="position: absolute; left: 0; right: 0; top: 0; height: 64px; box-sizing: border-box; padding: 10px 20px; display: flex; align-items: center; gap: 12px">
+<div style="display: flex; align-items: center; gap: 8px">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="#F2F2F6" aria-hidden="true"><path d="M12 2c.6 4.9 3.1 7.4 8 8-4.9.6-7.4 3.1-8 8-.6-4.9-3.1-7.4-8-8 4.9-.6 7.4-3.1 8-8Z"></path></svg>
+<span style="font-size: 18px; font-weight: 700; letter-spacing: -0.01em">FPV</span>
+</div>
+<span style="height: 26px; display: inline-flex; align-items: center; padding: 0 10px; border-radius: 999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); font-family: 'Martian Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.08em; color: #C9C9D4">MODE 2</span>
+<span style="flex: 1"></span>
+<div style="display: inline-flex; align-items: center; gap: 4px; height: 44px; padding: 0 4px 0 14px; box-sizing: border-box; border-radius: 999px; background: rgba(20,20,28,0.55); border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px)">
+<span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: #4ADE80; box-shadow: 0 0 0 4px rgba(74,222,128,0.15)"></span>
+<span style="font-size: 14px; font-weight: 600; margin-left: 6px">Conectado</span>
+<span style="font-family: 'Martian Mono', ui-monospace, monospace; font-size: 11px; color: #9C9CAD; margin: 0 8px 0 6px">60 Hz · 12 ms</span>
+<button class="ib" aria-label="Desconectar" title="Desconectar" style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: rgba(255,255,255,0.06); color: #C9C9D4; cursor: pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 3v8"></path><path d="M6.3 7.3a8 8 0 1 0 11.4 0"></path></svg></button>
+</div>
+<span style="flex: 1"></span>
+<div style="display: flex; gap: 8px">
+<button class="ib" aria-label="Valores en vivo" title="Valores en vivo" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #F2F2F6; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-7 4 14 3-7h4"></path></svg></button>
+<a href="PhoneSettings.dc.html" class="ib" aria-label="Ajustes" title="Ajustes" style="width: 44px; height: 44px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #F2F2F6"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10"></path><path d="M18 7h2"></path><circle cx="16" cy="7" r="2"></circle><path d="M4 17h2"></path><path d="M10 17h10"></path><circle cx="8" cy="17" r="2"></circle></svg></a>
+<button class="ib" aria-label="Salir de pantalla completa" title="Pantalla completa" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #F2F2F6; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4v5H4"></path><path d="M15 4v5h5"></path><path d="M9 20v-5H4"></path><path d="M15 20v-5h5"></path></svg></button>
+</div>
+</header>
+
+<div aria-hidden="true" style="position: absolute; left: 34px; top: 112px; width: 6px; height: 232px; border-radius: 999px; background: rgba(255,255,255,0.08); overflow: hidden">
+<div style="position: absolute; left: 0; right: 0; bottom: 0; height: {{thrPct}}; border-radius: 999px; background: linear-gradient(0deg, #6E9BFF, #8B7CFF 60%, #FF8AD8)"></div>
+</div>
+
+<div style="position: absolute; left: 92px; top: 74px; width: 240px; display: flex; align-items: baseline; justify-content: space-between">
+<span style="font-family: 'Martian Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.1em; color: #9C9CAD">YAW · THROTTLE</span>
+<span><span style="font-family: 'Doto', ui-monospace, monospace; font-weight: 900; font-size: 30px; line-height: 1; color: #F2F2F6">{{thrTxt}}</span><span style="font-family: 'Martian Mono', ui-monospace, monospace; font-size: 11px; color: #9C9CAD; margin-left: 3px">%</span></span>
+</div>
+
+<div class="base" onPointerDown="{{lDown}}" onPointerMove="{{lMove}}" onPointerUp="{{lUp}}" onPointerCancel="{{lUp}}" style="position: absolute; left: 92px; top: 108px; width: 240px; height: 240px; border-radius: 50%; background: radial-gradient(circle at 50% 50%, rgba(139,124,255,0.07), rgba(255,255,255,0.02) 70%); border: 1px solid rgba(255,255,255,0.1); box-shadow: inset 0 1px 0 rgba(255,255,255,0.05)">
+<svg width="240" height="240" viewBox="0 0 240 240" aria-hidden="true" style="position: absolute; inset: -1px"><circle cx="120" cy="120" r="78" fill="none" stroke="rgba(255,255,255,0.07)" stroke-dasharray="2 6"></circle><circle cx="120" cy="120" r="12" fill="none" stroke="rgba(255,255,255,0.12)"></circle><path d="M120 22v18M120 200v18M22 120h18M200 120h18" stroke="rgba(255,255,255,0.18)" stroke-linecap="round"></path></svg>
+<div class="knob {{lDrag}}" style="position: absolute; left: {{lx}}; top: {{ly}}; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%; background: radial-gradient(circle at 34% 30%, rgba(255,255,255,0.55), transparent 32%), linear-gradient(150deg, #FF8AD8, #8B7CFF 55%, #6E9BFF); box-shadow: 0 0 34px rgba(139,124,255,0.55), inset -6px -8px 14px rgba(20,10,60,0.25)"></div>
+</div>
+
+<div style="position: absolute; left: 92px; top: 358px; width: 240px; text-align: center; font-family: 'Martian Mono', ui-monospace, monospace; font-size: 10px; color: #9C9CAD">Y {{yawTxt}}</div>
+
+<div style="position: absolute; left: 350px; top: 108px; width: 200px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<button class="ab" onClick="{{toggleArm}}" aria-pressed="{{armed}}" style="height: 60px; border-radius: 20px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-family: 'Martian Mono', ui-monospace, monospace; background: {{armBg}}; border: 1px solid {{armEdge}}; color: {{armInk}}"><span style="font-size: 13px; font-weight: 500; letter-spacing: 0.08em">{{armLabel}}</span><span style="font-size: 9px; opacity: 0.75; letter-spacing: 0.06em">TOGGLE</span></button>
+<button class="ab" onPointerDown="{{resetDown}}" onPointerUp="{{resetUp}}" onPointerLeave="{{resetUp}}" style="height: 60px; border-radius: 20px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-family: 'Martian Mono', ui-monospace, monospace; background: {{resetBg}}; border: 1px solid rgba(255,255,255,0.1); color: #F2F2F6"><span style="font-size: 13px; font-weight: 500; letter-spacing: 0.08em">RESET</span><span style="font-size: 9px; color: #9C9CAD; letter-spacing: 0.06em">HOLD</span></button>
+<button class="ab" onClick="{{toggleA1}}" aria-pressed="{{a1}}" style="height: 60px; border-radius: 20px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-family: 'Martian Mono', ui-monospace, monospace; background: {{a1Bg}}; border: 1px solid {{a1Edge}}; color: #F2F2F6"><span style="font-size: 13px; font-weight: 500; letter-spacing: 0.08em">AUX 1</span><span style="font-size: 9px; color: #9C9CAD; letter-spacing: 0.06em">{{a1Txt}}</span></button>
+<button class="ab" onClick="{{toggleA2}}" aria-pressed="{{a2}}" style="height: 60px; border-radius: 20px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-family: 'Martian Mono', ui-monospace, monospace; background: {{a2Bg}}; border: 1px solid {{a2Edge}}; color: #F2F2F6"><span style="font-size: 13px; font-weight: 500; letter-spacing: 0.08em">AUX 2</span><span style="font-size: 9px; color: #9C9CAD; letter-spacing: 0.06em">{{a2Txt}}</span></button>
+</div>
+<button class="ib" style="height: 40px; border-radius: 999px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; background: transparent; border: 1px dashed rgba(255,255,255,0.14); color: #9C9CAD; font-family: 'Urbanist', system-ui, sans-serif; font-size: 13px; font-weight: 600"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>4 botones más</button>
+</div>
+
+<div style="position: absolute; left: 568px; top: 74px; width: 240px; display: flex; align-items: baseline; justify-content: space-between">
+<span style="font-family: 'Martian Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.1em; color: #9C9CAD">ROLL · PITCH</span>
+<span style="font-family: 'Martian Mono', ui-monospace, monospace; font-size: 11px; color: #C9C9D4">R {{rollTxt}} · P {{pitchTxt}}</span>
+</div>
+
+<div class="base" onPointerDown="{{rDown}}" onPointerMove="{{rMove}}" onPointerUp="{{rUp}}" onPointerCancel="{{rUp}}" style="position: absolute; left: 568px; top: 108px; width: 240px; height: 240px; border-radius: 50%; background: radial-gradient(circle at 50% 50%, rgba(110,155,255,0.07), rgba(255,255,255,0.02) 70%); border: 1px solid rgba(255,255,255,0.1); box-shadow: inset 0 1px 0 rgba(255,255,255,0.05)">
+<svg width="240" height="240" viewBox="0 0 240 240" aria-hidden="true" style="position: absolute; inset: -1px"><circle cx="120" cy="120" r="78" fill="none" stroke="rgba(255,255,255,0.07)" stroke-dasharray="2 6"></circle><circle cx="120" cy="120" r="12" fill="none" stroke="rgba(255,255,255,0.12)"></circle><path d="M120 22v18M120 200v18M22 120h18M200 120h18" stroke="rgba(255,255,255,0.18)" stroke-linecap="round"></path></svg>
+<div class="knob {{rDrag}}" style="position: absolute; left: {{rx}}; top: {{ry}}; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%; background: radial-gradient(circle at 34% 30%, rgba(255,255,255,0.55), transparent 32%), linear-gradient(150deg, #8B7CFF, #6E9BFF 60%, #5FC3FF); box-shadow: 0 0 34px rgba(110,155,255,0.55), inset -6px -8px 14px rgba(20,10,60,0.25)"></div>
+</div>
+
+<div style="position: absolute; left: 568px; top: 358px; width: 240px; text-align: center; font-family: 'Martian Mono', ui-monospace, monospace; font-size: 10px; color: #9C9CAD">centro al soltar</div>
+
+<div aria-hidden="true" style="position: absolute; right: 34px; top: 112px; width: 6px; height: 232px; display: flex; flex-direction: column; justify-content: space-between; align-items: center">
+<span style="width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.18)"></span><span style="width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.18)"></span><span style="width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.35)"></span><span style="width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.18)"></span><span style="width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.18)"></span>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"glow":{"editor":"range","default":0.28,"min":0,"max":0.7,"step":0.02,"section":"Look"},"$preview":{"width":900,"height":416}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { yaw: 0, thr: 0.53, roll: 0, pitch: 0, lDrag: false, rDrag: false, armed: false, a1: true, a2: false, reset: false };
+  }
+  pt(e) {
+    const r = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - r.left) / r.width) * 2 - 1;
+    const y = ((e.clientY - r.top) / r.height) * 2 - 1;
+    const cl = (v) => Math.max(-1, Math.min(1, v / 0.74));
+    return { x: cl(x), y: cl(y) };
+  }
+  sign(v) { const s = v >= 0 ? '+' : '−'; return s + Math.abs(v).toFixed(2); }
+  pos(v) { return (50 + v * 37) + '%'; }
+  renderVals() {
+    const s = this.state;
+    const on = (v) => v ? 'rgba(139,124,255,0.2)' : 'rgba(255,255,255,0.05)';
+    const onE = (v) => v ? 'rgba(139,124,255,0.7)' : 'rgba(255,255,255,0.1)';
+    return {
+      glow: this.props.glow ?? 0.28,
+      lx: this.pos(s.yaw), ly: this.pos(-(s.thr * 2 - 1)),
+      rx: this.pos(s.roll), ry: this.pos(-s.pitch),
+      lDrag: s.lDrag ? 'drag' : '', rDrag: s.rDrag ? 'drag' : '',
+      thrTxt: String(Math.round(s.thr * 100)), thrPct: (s.thr * 100) + '%',
+      yawTxt: this.sign(s.yaw), rollTxt: this.sign(s.roll), pitchTxt: this.sign(s.pitch),
+      lDown: (e) => { try { e.currentTarget.setPointerCapture(e.pointerId); } catch (x) {} const p = this.pt(e); this.setState({ lDrag: true, yaw: p.x, thr: (1 - p.y) / 2 }); },
+      lMove: (e) => { if (!this.state.lDrag) return; const p = this.pt(e); this.setState({ yaw: p.x, thr: (1 - p.y) / 2 }); },
+      lUp: () => this.setState({ lDrag: false, yaw: 0 }),
+      rDown: (e) => { try { e.currentTarget.setPointerCapture(e.pointerId); } catch (x) {} const p = this.pt(e); this.setState({ rDrag: true, roll: p.x, pitch: -p.y }); },
+      rMove: (e) => { if (!this.state.rDrag) return; const p = this.pt(e); this.setState({ roll: p.x, pitch: -p.y }); },
+      rUp: () => this.setState({ rDrag: false, roll: 0, pitch: 0 }),
+      armed: s.armed, armLabel: s.armed ? 'ARMED' : 'ARM',
+      armBg: s.armed ? 'rgba(248,113,113,0.18)' : 'rgba(255,255,255,0.05)',
+      armEdge: s.armed ? '#F87171' : 'rgba(255,255,255,0.1)',
+      armInk: s.armed ? '#FCA5A5' : '#F2F2F6',
+      toggleArm: () => this.setState({ armed: !this.state.armed }),
+      resetBg: s.reset ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.05)',
+      resetDown: () => this.setState({ reset: true }), resetUp: () => this.setState({ reset: false }),
+      a1: s.a1, a1Bg: on(s.a1), a1Edge: onE(s.a1), a1Txt: s.a1 ? 'ON' : 'OFF', toggleA1: () => this.setState({ a1: !this.state.a1 }),
+      a2: s.a2, a2Bg: on(s.a2), a2Edge: onE(s.a2), a2Txt: s.a2 ? 'ON' : 'OFF', toggleA2: () => this.setState({ a2: !this.state.a2 })
+    };
+  }
+}
+</script>
+</body>
+</html>

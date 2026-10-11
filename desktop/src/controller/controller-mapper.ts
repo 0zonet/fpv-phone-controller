@@ -1,4 +1,4 @@
-import type { ControllerState, MapperOptions, VirtualControllerAxes } from './virtual-controller.types.js';
+import type { ControllerAxisState, MapperOptions, VirtualControllerAxes } from './virtual-controller.types.js';
 
 export class ControllerMapper {
   constructor(private readonly options: MapperOptions) {
@@ -9,7 +9,7 @@ export class ControllerMapper {
         deadzone < 0 || deadzone >= 1) throw new Error('Invalid calibration for ' + axis);
     }
   }
-  map(state: ControllerState): VirtualControllerAxes {
+  map(state: ControllerAxisState): VirtualControllerAxes {
     return {
       throttle: this.mapAxis(state.throttle, 'throttle', true),
       yaw: this.mapAxis(state.yaw, 'yaw'), pitch: this.mapAxis(state.pitch, 'pitch'), roll: this.mapAxis(state.roll, 'roll')

@@ -12,8 +12,8 @@ export class ControllerTransmissionService implements OnDestroy {
   constructor() {
     effect(() => {
       const connected = this.transport.status() === 'connected';
-      untracked(() => { if (connected) this.loop.start(); else this.loop.stop(); });
+      untracked(() => { if (connected) this.loop.start(); else { this.loop.stop(); this.state.resetButtons(); } });
     });
   }
-  ngOnDestroy(): void { this.loop.stop(); this.transport.disconnect(); }
+  ngOnDestroy(): void { this.loop.stop(); this.state.resetButtons(); this.transport.disconnect(); }
 }

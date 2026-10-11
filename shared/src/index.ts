@@ -9,12 +9,26 @@ export interface ControlFrame {
   timestamp: number;
 }
 export type ControllerAxes = Omit<ControlFrame, 'timestamp'>;
+export const CONTROLLER_BUTTON_COUNT = 8;
+/** Internal indices 0..7 correspond to vJoy buttons 1..8. */
+export interface ControllerState extends ControllerAxes { readonly buttons: readonly boolean[]; }
+export const neutralButtons = (): readonly boolean[] => Object.freeze(Array<boolean>(CONTROLLER_BUTTON_COUNT).fill(false));
+export function isControllerButtons(value: unknown): value is boolean[] {
+  return Array.isArray(value) && value.length <= CONTROLLER_BUTTON_COUNT
+    && Array.from(value).every(button => typeof button === 'boolean');
+}
+export function normalizeButtons(buttons: readonly boolean[] = []): readonly boolean[] {
+  if (!isControllerButtons(buttons)) throw new Error('Buttons must contain at most eight booleans.');
+  return Object.freeze(Array.from({ length: CONTROLLER_BUTTON_COUNT }, (_, index) => buttons[index] ?? false));
+}
 export interface ControllerMessage {
   readonly type: 'controller-state';
   readonly sequence: number;
   /** Milisegundos Unix del emisor; no implica relojes sincronizados. */
   readonly timestamp: number;
   readonly axes: ControllerAxes;
+  /** Absent on legacy clients; treated as all released. */
+  readonly buttons?: readonly boolean[];
 }
 export const neutralControls = (): ControlFrame => ({ throttle: 0, yaw: 0, pitch: 0, roll: 0, timestamp: Date.now() });
 export function isControlFrame(value: unknown): value is ControlFrame {

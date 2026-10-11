@@ -72,7 +72,7 @@ export class ControllerTransportService implements OnDestroy {
     // OPEN = 1; avoids a dependency on the global WebSocket constructor in tests.
     if (!socket || socket.readyState !== 1 || socket.bufferedAmount > 4096) return;
     const message: ControllerMessage = {
-      type: 'controller-state', sequence: this.sequence, timestamp: this.clock.timestamp(), axes: { ...state }
+      type: 'controller-state', sequence: this.sequence, timestamp: this.clock.timestamp(), axes: { throttle: state.throttle, yaw: state.yaw, pitch: state.pitch, roll: state.roll }, buttons: [...state.buttons]
     };
     try {
       socket.send(JSON.stringify(message));

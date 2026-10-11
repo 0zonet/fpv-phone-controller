@@ -1,3 +1,4 @@
+import { neutralButtons } from '../../../../../shared/src/index';
 import '@angular/compiler';
 import { Injector, runInInjectionContext } from '@angular/core';
 import { test } from 'node:test';
@@ -6,7 +7,7 @@ import { ControllerTransportService } from './controller-transport.service';
 import { SOCKET_FACTORY, TRANSPORT_CLOCK } from './transport-runtime';
 import { FakeClock, FakeSocket } from './transport-test-runtime';
 
-const axes = { throttle: .42, yaw: -.14, pitch: .72, roll: .05 };
+const axes = { throttle: .42, yaw: -.14, pitch: .72, roll: .05, buttons: neutralButtons() };
 test('browser exceptions never reveal the pairing URL or token to UI errors', () => {
   const injector = Injector.create({providers: [
     {provide: SOCKET_FACTORY, useValue: () => { throw new Error('ws://192.168.1.92:8080/?token=private-token'); }},
@@ -66,9 +67,9 @@ test('envía protocolo JSON, timestamp y sequence creciente sin mutar estado', (
   const { transport, sockets, clock } = setup();
   transport.connect('ws://localhost:8080'); const socket = sockets[0]; socket.open();
   transport.send(axes); clock.advance(17); transport.send(axes);
-  assert.deepEqual(JSON.parse(socket.messages[0]), { type: 'controller-state', sequence: 0, timestamp: 1700000000000, axes });
-  assert.deepEqual(JSON.parse(socket.messages[1]), { type: 'controller-state', sequence: 1, timestamp: 1700000000017, axes });
-  assert.deepEqual(axes, { throttle: .42, yaw: -.14, pitch: .72, roll: .05 });
+  assert.deepEqual(JSON.parse(socket.messages[0]), { type: 'controller-state', sequence: 0, timestamp: 1700000000000, axes: { throttle: .42, yaw: -.14, pitch: .72, roll: .05 }, buttons: neutralButtons() });
+  assert.deepEqual(JSON.parse(socket.messages[1]), { type: 'controller-state', sequence: 1, timestamp: 1700000000017, axes: { throttle: .42, yaw: -.14, pitch: .72, roll: .05 }, buttons: neutralButtons() });
+  assert.deepEqual(axes, { throttle: .42, yaw: -.14, pitch: .72, roll: .05, buttons: neutralButtons() });
   transport.disconnect(); assert.equal(clock.tasks.size, 0);
 });
 test('no envía en CLOSING/CLOSED ni incrementa sequence por backpressure', () => {
@@ -103,4 +104,14 @@ test('dirección inválida y fallo de envío se convierten en ERROR', () => {
   transport.connect('http://localhost'); assert.equal(transport.status(), 'error'); assert.equal(sockets.length, 0);
   transport.connect('ws://localhost:8080'); sockets[0].open(); sockets[0].failSend = true;
   transport.send(axes); assert.equal(transport.status(), 'error'); assert.equal(sockets[0].messages.length, 0);
+});
+
+test('serializes all buttons separately from axes using current state', () => {
+  const { transport, sockets } = setup(); transport.connect('ws://localhost:8080'); sockets[0].open();
+  const buttons = [true, false, true, false, false, false, false, true];
+  transport.send({ ...axes, buttons });
+  const packet = JSON.parse(sockets[0].messages[0]);
+  assert.deepEqual(packet.buttons, buttons); assert.equal('buttons' in packet.axes, false);
+  assert.deepEqual(buttons, [true, false, true, false, false, false, false, true]);
+  transport.disconnect(); transport.send({ ...axes, buttons }); assert.equal(sockets[0].messages.length, 1);
 });

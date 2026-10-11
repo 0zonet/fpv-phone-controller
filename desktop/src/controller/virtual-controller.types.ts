@@ -1,6 +1,6 @@
 import type { ControllerAxes } from '../../../shared/src/index.js';
 
-export type ControllerState = Readonly<ControllerAxes>;
+export type ControllerAxisState = Readonly<ControllerAxes>;
 /** Driver-independent: throttle 0..1, other axes -1..1. */
 export interface VirtualControllerAxes {
   readonly throttle: number;

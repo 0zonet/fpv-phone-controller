@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Desktop — Phone connected</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&amp;family=Doto:wght@700;800;900&amp;family=Martian+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0D0D12}
+.ib{transition:background-color .15s ease}
+.ib:hover{background:rgba(255,255,255,0.1) !important}
+.wc:hover{background:rgba(255,255,255,0.08) !important}
+.wx:hover{background:#C42B1C !important;color:#FFFFFF !important}
+button:focus-visible{outline:2px solid #F2F2F6;outline-offset:2px}
+.stick{animation:stick 3.2s ease-in-out infinite alternate}
+.stick2{animation:stick2 2.6s ease-in-out infinite alternate}
+@keyframes stick{0%{transform:translate(-9px,6px)}100%{transform:translate(8px,-10px)}}
+@keyframes stick2{0%{transform:translate(10px,-6px)}100%{transform:translate(-8px,9px)}}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(74,222,128,0.5)}100%{box-shadow:0 0 0 8px rgba(74,222,128,0)}}
+.pulse{animation:pulse 1.6s ease-out infinite}
+@media (prefers-reduced-motion: reduce){.stick,.stick2,.pulse{animation:none}}
+</style>
+</helmet>
+<div style="position: relative; width: 440px; height: 640px; overflow: hidden; background: #0D0D12; color: #F2F2F6; font-family: 'Urbanist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; display: flex; flex-direction: column">
+
+<div aria-hidden="true" style="position: absolute; left: -20%; right: -20%; bottom: -30%; height: 60%; filter: blur(70px); opacity: 0.38; background: radial-gradient(35% 55% at 20% 70%, #FF8AD8, transparent 70%), radial-gradient(40% 60% at 55% 80%, #8B7CFF, transparent 70%), radial-gradient(35% 55% at 88% 70%, #6E9BFF, transparent 70%)"></div>
+
+<div style="position: relative; height: 40px; flex: none; display: flex; align-items: center; padding-left: 14px; gap: 8px">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="#F2F2F6" aria-hidden="true"><path d="M12 2c.6 4.9 3.1 7.4 8 8-4.9.6-7.4 3.1-8 8-.6-4.9-3.1-7.4-8-8 4.9-.6 7.4-3.1 8-8Z"></path></svg>
+<span style="font-size: 13px; font-weight: 600">FPV Phone Controller</span>
+<span style="flex: 1"></span>
+<button class="wc" aria-label="Minimize" style="width: 46px; height: 40px; border: 0; background: transparent; color: #C9C9D4; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6h10" stroke="currentColor" stroke-width="1"></path></svg></button>
+<button class="wx" aria-label="Close" style="width: 46px; height: 40px; border: 0; background: transparent; color: #C9C9D4; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M1.5 1.5l9 9M10.5 1.5l-9 9" stroke="currentColor" stroke-width="1"></path></svg></button>
+</div>
+
+<div style="position: relative; flex: 1; box-sizing: border-box; padding: 8px 20px 16px; display: flex; flex-direction: column; gap: 14px">
+
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+<div style="padding: 10px 12px; border-radius: 16px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; gap: 6px">
+<span style="font-family: 'Martian Mono', ui-monospace, monospace; font-size: 9px; letter-spacing: 0.1em; color: #9C9CAD">CONTROLLER</span>
+<span style="display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600"><span aria-hidden="true" style="width: 7px; height: 7px; border-radius: 50%; background: #4ADE80"></span>Ready</span>
+</div>
+<div style="padding: 10px 12px; border-radius: 16px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; gap: 6px">
+<span style="font-family: 'Martian Mono', ui-monospace, monospace; font-size: 9px; letter-spacing: 0.1em; color: #9C9CAD">SERVER</span>
+<span style="display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600"><span aria-hidden="true" style="width: 7px; height: 7px; border-radius: 50%; background: #4ADE80"></span>Ready</span>
+</div>
+<div style="padding: 10px 12px; border-radius: 16px; background: rgba(74,222,128,0.08); border: 1px solid rgba(74,222,128,0.3); display: flex; flex-direction: column; gap: 6px">
+<span style="font-family: 'Martian Mono', ui-monospace, monospace; font-size: 9px; letter-spacing: 0.1em; color: #9C9CAD">PHONE</span>
+<span style="display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600"><span class="pulse" aria-hidden="true" style="width: 7px; height: 7px; border-radius: 50%; background: #4ADE80"></span>Connected</span>
+</div>
+</div>
+
+<div style="flex: 1; padding: 22px; border-radius: 28px; background: rgba(30,30,40,0.62); border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); display: flex; flex-direction: column; align-items: center; gap: 18px">
+
+<div aria-hidden="true" style="display: flex; gap: 22px; padding: 18px 24px; border-radius: 26px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08)">
+<div style="position: relative; width: 104px; height: 104px; box-sizing: border-box; border-radius: 50%; border: 1px solid rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center">
+<div style="position: absolute; left: 50%; top: 10px; bottom: 10px; width: 1px; background: rgba(255,255,255,0.08)"></div>
+<div style="position: absolute; top: 50%; left: 10px; right: 10px; height: 1px; background: rgba(255,255,255,0.08)"></div>
+<div class="stick" style="width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(150deg, #FF8AD8, #8B7CFF 55%, #6E9BFF); box-shadow: 0 0 20px rgba(139,124,255,0.6)"></div>
+</div>
+<div style="position: relative; width: 104px; height: 104px; box-sizing: border-box; border-radius: 50%; border: 1px solid rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center">
+<div style="position: absolute; left: 50%; top: 10px; bottom: 10px; width: 1px; background: rgba(255,255,255,0.08)"></div>
+<div style="position: absolute; top: 50%; left: 10px; right: 10px; height: 1px; background: rgba(255,255,255,0.08)"></div>
+<div class="stick2" style="width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(150deg, #8B7CFF, #6E9BFF 60%, #5FC3FF); box-shadow: 0 0 20px rgba(110,155,255,0.6)"></div>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; align-items: center; gap: 4px">
+<span><span style="font-family: 'Doto', ui-monospace, monospace; font-weight: 900; font-size: 56px; line-height: 1">60</span><span style="font-family: 'Martian Mono', ui-monospace, monospace; font-size: 11px; color: #9C9CAD; margin-left: 6px">packets/s</span></span>
+<span style="font-size: 22px; font-weight: 700; letter-spacing: -0.01em; margin-top: 6px">You’re ready to fly</span>
+<span style="font-size: 14px; line-height: 1.45; color: #C9C9D4; text-align: center; max-width: 310px">Open your simulator and select the vJoy controller. Tested with Uncrashed and FPV SkyDive.</span>
+</div>
+
+<div style="display: flex; gap: 8px; margin-top: auto">
+<button class="ib" style="height: 40px; padding: 0 14px; border-radius: 999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #F2F2F6; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer">Disconnect phone</button>
+<button class="ib" style="height: 40px; padding: 0 14px; border-radius: 999px; background: transparent; border: 0; color: #C9C9D4; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer">Show QR</button>
+</div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 8px">
+<button class="ib" aria-expanded="false" style="height: 36px; padding: 0 12px; border-radius: 999px; background: transparent; border: 0; color: #C9C9D4; font-family: inherit; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer">Advanced<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button>
+<button class="ib" style="height: 36px; padding: 0 12px; border-radius: 999px; background: transparent; border: 0; color: #C9C9D4; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer">Logs</button>
+<span style="flex: 1"></span>
+<span style="font-family: 'Martian Mono', ui-monospace, monospace; font-size: 10px; color: #9C9CAD">v0.4.0-beta.1</span>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":440,"height":640}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

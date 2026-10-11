@@ -43,3 +43,7 @@ If packets stop for 250 ms, failsafe resets the controls. Keep the phone app vis
 Close the companion. Windows Settings > Apps > Installed apps > FPV Phone Controller > Uninstall.
 
 vJoy is a separate driver and remains installed. Logs and onboarding preferences remain in %LOCALAPPDATA%/FPVPhoneController; delete that folder manually if desired.
+
+## Botones virtuales
+
+En Configure vJoy habilita al menos 8 botones en el dispositivo existente. ARM = Button 1 (toggle), RESET = Button 2 (mantener pulsado), AUX 1/2 = Buttons 3/4 (toggle). Compruébalos primero en joy.cpl → vJoy → Properties → Test. Al desconectarte, todos se liberan. Los nombres no asignan automáticamente acciones del simulador.

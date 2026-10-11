@@ -27,3 +27,10 @@ test('rechaza cada eje fuera de rango, ausente o no numérico', () => {
   }
   assert.equal(isControllerMessage({ ...message, axes: { ...message.axes, throttle: -.01 } }), false);
 });
+
+test('validates boolean button arrays with maximum eight; legacy packets stay neutral', () => {
+  for (const buttons of [[], [true], Array<boolean>(8).fill(false)]) assert.equal(isControllerMessage({ ...message, buttons }), true);
+  for (const buttons of [null, {}, 'true', [1], [false, 'false'], Array(9).fill(false), Array(8), undefined])
+    assert.equal(isControllerMessage({ ...message, buttons }), false);
+  assert.equal(isControllerMessage(message), true);
+});

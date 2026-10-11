@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>FPV — Sin conexión</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&amp;family=Doto:wght@700;800;900&amp;family=Martian+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0D0D12}
+.cta:hover{filter:brightness(1.06)}
+.ib:hover{background:rgba(255,255,255,0.1) !important}
+button:focus-visible,a:focus-visible{outline:2px solid #F2F2F6;outline-offset:2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{animation:spin 1s linear infinite}
+@media (prefers-reduced-motion: reduce){.spin{animation:none}}
+</style>
+</helmet>
+<div style="position: relative; width: 900px; height: 416px; overflow: hidden; background: #0D0D12; color: #F2F2F6; font-family: 'Urbanist', system-ui, sans-serif; -webkit-font-smoothing: antialiased">
+
+<div aria-hidden="true" style="position: absolute; left: -10%; right: -10%; bottom: -55%; height: 90%; filter: blur(70px); opacity: 0.2; background: radial-gradient(30% 50% at 18% 50%, #FF8AD8, transparent 70%), radial-gradient(34% 56% at 50% 60%, #8B7CFF, transparent 70%), radial-gradient(30% 50% at 84% 50%, #6E9BFF, transparent 70%)"></div>
+
+<header style="position: absolute; left: 0; right: 0; top: 0; height: 64px; box-sizing: border-box; padding: 10px 20px; display: flex; align-items: center; gap: 12px">
+<div style="display: flex; align-items: center; gap: 8px">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="#F2F2F6" aria-hidden="true"><path d="M12 2c.6 4.9 3.1 7.4 8 8-4.9.6-7.4 3.1-8 8-.6-4.9-3.1-7.4-8-8 4.9-.6 7.4-3.1 8-8Z"></path></svg>
+<span style="font-size: 18px; font-weight: 700; letter-spacing: -0.01em">FPV</span>
+</div>
+<span style="height: 26px; display: inline-flex; align-items: center; padding: 0 10px; border-radius: 999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); font-family: 'Martian Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.08em; color: #C9C9D4">MODE 2</span>
+<span style="flex: 1"></span>
+<div style="display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 16px; box-sizing: border-box; border-radius: 999px; background: {{pillBg}}; border: 1px solid {{pillEdge}}">
+<span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: {{dot}}"></span>
+<span style="font-size: 14px; font-weight: 600; color: {{pillInk}}">{{pillTxt}}</span>
+</div>
+<span style="flex: 1"></span>
+<div style="display: flex; gap: 8px">
+<button class="ib" aria-label="Valores en vivo" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #F2F2F6; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-7 4 14 3-7h4"></path></svg></button>
+<button class="ib" aria-label="Ajustes" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #F2F2F6; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10"></path><path d="M18 7h2"></path><circle cx="16" cy="7" r="2"></circle><path d="M4 17h2"></path><path d="M10 17h10"></path><circle cx="8" cy="17" r="2"></circle></svg></button>
+<button class="ib" aria-label="Pantalla completa" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #F2F2F6; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5"></path><path d="M20 9V4h-5"></path><path d="M4 15v5h5"></path><path d="M20 15v5h-5"></path></svg></button>
+</div>
+</header>
+
+<div aria-hidden="true" style="opacity: 0.32">
+<div style="position: absolute; left: 92px; top: 108px; width: 240px; height: 240px; box-sizing: border-box; border-radius: 50%; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.02)"><div style="position: absolute; left: 50%; top: 48.9%; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%; background: #3A3A46"></div></div>
+<div style="position: absolute; left: 568px; top: 108px; width: 240px; height: 240px; box-sizing: border-box; border-radius: 50%; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.02)"><div style="position: absolute; left: 50%; top: 50%; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%; background: #3A3A46"></div></div>
+<div style="position: absolute; left: 34px; top: 112px; width: 6px; height: 232px; border-radius: 999px; background: rgba(255,255,255,0.1)"></div>
+</div>
+
+<div style="position: absolute; left: 92px; top: 74px; width: 240px; display: flex; align-items: baseline; justify-content: space-between; opacity: 0.6">
+<span style="font-family: 'Martian Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.1em; color: #9C9CAD">YAW · THROTTLE</span>
+<span style="font-family: 'Doto', ui-monospace, monospace; font-weight: 900; font-size: 30px; line-height: 1">53</span>
+</div>
+
+<div style="position: absolute; left: 300px; top: 92px; width: 300px; box-sizing: border-box; padding: 22px; border-radius: 28px; background: rgba(30,30,40,0.72); border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); box-shadow: 0 24px 60px rgba(0,0,0,0.45); display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-family: 'Martian Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.1em; color: {{eyebrowInk}}">{{eyebrow}}</span>
+<span style="font-size: 22px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.15">{{title}}</span>
+<span style="font-size: 14px; line-height: 1.45; color: #C9C9D4">{{body}}</span>
+</div>
+<button class="cta" style="height: 52px; border: 0; border-radius: 999px; background: #F2F2F6; color: #121216; font-family: 'Urbanist', system-ui, sans-serif; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer">
+<sc-if value="{{connecting}}" hint-placeholder-val="{{ false }}"><svg class="spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9"></path></svg></sc-if>
+<sc-if value="{{notConnecting}}" hint-placeholder-val="{{ true }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3v5M15 3v5"></path><path d="M6 8h12v3a6 6 0 0 1-12 0V8Z"></path><path d="M12 17v4"></path></svg></sc-if>
+{{cta}}</button>
+<div style="display: flex; align-items: center; justify-content: center; gap: 8px">
+<button class="ib" style="height: 40px; padding: 0 14px; border-radius: 999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #C9C9D4; font-family: 'Urbanist', system-ui, sans-serif; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"></path><path d="M8 12h8"></path></svg>Escanear QR</button>
+<button class="ib" style="height: 40px; padding: 0 14px; border-radius: 999px; background: transparent; border: 0; color: #9C9CAD; font-family: 'Urbanist', system-ui, sans-serif; font-size: 13px; font-weight: 600; cursor: pointer">Conexión manual</button>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"state":{"editor":"enum","options":["idle","connecting","lost"],"default":"idle","section":"Estado"},"$preview":{"width":900,"height":416}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.props.state ?? 'idle';
+    const S = {
+      idle: { pillTxt: 'Sin conexión', dot: '#9C9CAD', pillBg: 'rgba(255,255,255,0.06)', pillEdge: 'rgba(255,255,255,0.1)', pillInk: '#C9C9D4',
+        eyebrow: 'PC · VÍA QR', eyebrowInk: '#9C9CAD', title: 'Listo para emparejar', body: 'Abre FPV Phone Controller en Windows. Si llegaste desde el QR, solo toca Conectar.', cta: 'Conectar' },
+      connecting: { pillTxt: 'Conectando…', dot: '#F5C969', pillBg: 'rgba(250,190,60,0.1)', pillEdge: 'rgba(250,190,60,0.3)', pillInk: '#F5C969',
+        eyebrow: 'BUSCANDO TU PC', eyebrowInk: '#F5C969', title: 'Conectando…', body: 'Mantén el teléfono y el PC en la misma red Wi‑Fi.', cta: 'Cancelar' },
+      lost: { pillTxt: 'Conexión perdida', dot: '#F87171', pillBg: 'rgba(248,113,113,0.12)', pillEdge: 'rgba(248,113,113,0.35)', pillInk: '#FCA5A5',
+        eyebrow: 'SIN RESPUESTA DEL PC', eyebrowInk: '#FCA5A5', title: 'Se perdió la conexión', body: 'Revisa que la app de Windows siga abierta y que el firewall permita la red local.', cta: 'Reintentar' }
+    };
+    const v = S[st] || S.idle;
+    return Object.assign({}, v, { connecting: st === 'connecting', notConnecting: st !== 'connecting' });
+  }
+}
+</script>
+</body>
+</html>

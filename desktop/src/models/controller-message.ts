@@ -1,3 +1,4 @@
+import { isControllerButtons } from '../../../shared/src/index.js';
 import type { ControllerMessage } from '../../../shared/src/index.js';
 export type { ControllerMessage } from '../../../shared/src/index.js';
 
@@ -9,6 +10,7 @@ function inRange(value: unknown, minimum: number, maximum: number): value is num
 }
 export function isControllerMessage(value: unknown): value is ControllerMessage {
   if (!record(value) || value['type'] !== 'controller-state' || !record(value['axes'])) return false;
+  if ('buttons' in value && !isControllerButtons(value['buttons'])) return false;
   const axes = value['axes'];
   return inRange(value['sequence'], 0, Number.MAX_SAFE_INTEGER) && Number.isSafeInteger(value['sequence'])
     && inRange(value['timestamp'], 0, Number.MAX_SAFE_INTEGER)

@@ -6,7 +6,9 @@ phone: Angular 20 standalone, signals, Pointer Events, official PWA service work
 desktop: TypeScript strict, ws, native WinForms window, bundled Node 24 x64 and Koffi/vJoy.
 shared: controller protocol, strict pairing codec and generated product version.
 
-The input pipeline remains ControllerState → WebSocket validation → calibration/mapper → VirtualController → vJoy. QR/onboarding/health/logging are distribution concerns, outside the control pipeline.
+The input pipeline remains ControllerState → WebSocket validation → calibration/mapper → VirtualController → vJoy. QR/onboarding/health/logging are distribution concerns, outside the control pipeline. Button handling is independent of axis calibration; native numbering lives in the vJoy driver.
+
+[Virtual buttons: configuration and verification](docs/VIRTUAL_BUTTONS.md).
 
 ## Frontend
 
@@ -27,7 +29,7 @@ Regenerate QR restarts the existing companion, closes the phone connection and p
 
 ## Protocol and network
 
-Controller JSON: type controller-state, sequence, timestamp, axes { throttle, yaw, pitch, roll }. Existing validation, 60 Hz latest-state transmission and failsafe are unchanged.
+Controller JSON: type controller-state, sequence, timestamp, axes { throttle, yaw, pitch, roll }, buttons [boolean × 8]. Legacy messages without buttons release all buttons; short arrays are padded with false. Validation rejects non-booleans and arrays longer than eight. The existing 60 Hz latest-state transmission carries axes and buttons together; failsafe releases all eight buttons as well as resetting axes.
 
 Pairing v1: host/private IPv4, port/integer 1..65535, token/48 hexadecimal characters, version/1; base64url in /connect?data=. It is not encrypted. The distribution binds one selected local interface and requires same-subnet peer, allowed Origin and token.
 

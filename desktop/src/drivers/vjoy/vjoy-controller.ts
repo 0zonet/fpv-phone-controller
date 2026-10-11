@@ -1,3 +1,5 @@
+import { neutralButtons } from '../../../../shared/src/index.js';
+import { requireVJoyButtons, writeVJoyButtons } from './vjoy-buttons.js';
 import { existsSync } from 'node:fs';
 import { isAbsolute, join } from 'node:path';
 import type { VirtualController } from '../../controller/virtual-controller.js';
@@ -26,6 +28,7 @@ export class VJoyController implements VirtualController {
       if (!native.matches()) throw new Error('vJoy driver and SDK DLL versions do not match. Use the DLL supplied with the installed release.');
       if (!native.exists(this.deviceId)) throw new Error('vJoy device ' + this.deviceId + ' is missing. Enable it in Configure vJoy.');
       if (native.status(this.deviceId) !== 1) throw new Error('vJoy device ' + this.deviceId + ' is not free. Close other feeders or choose another device ID.');
+      requireVJoyButtons(native.buttonCount(this.deviceId));
       for (const axis of Object.keys(axisUsage) as (keyof typeof axisUsage)[]) {
         if (!native.axisExists(this.deviceId, axisUsage[axis])) throw new Error('vJoy axis ' + axis + ' is missing. Enable X, Y, Z and Slider in Configure vJoy.');
         this.ranges.set(axis, native.range(this.deviceId, axisUsage[axis]));
@@ -52,7 +55,14 @@ export class VJoyController implements VirtualController {
     }
     if (failures.length) throw new Error('vJoy axis update failed (' + failures.join(', ') + '); device may have been removed.');
   }
-  reset(): void { this.updateAxes(safeAxes()); }
+  updateButtons(buttons: readonly boolean[]): void {
+    if (!this.connected || !this.native) throw new Error('vJoy is not connected.');
+    writeVJoyButtons(buttons, this.deviceId, this.native.setButton);
+  }
+  reset(): void {
+    try { this.updateAxes(safeAxes()); }
+    finally { this.updateButtons(neutralButtons()); }
+  }
   async disconnect(): Promise<void> {
     const native = this.native;
     if (!native) return;

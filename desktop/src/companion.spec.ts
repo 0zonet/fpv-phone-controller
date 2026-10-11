@@ -7,7 +7,7 @@ import { defaultConfig } from './config.js';
 import { FakeVirtualController } from './controller/fake-virtual-controller.js';
 
 const message = (sequence: number) => JSON.stringify({ type: 'controller-state', sequence, timestamp: Date.now(),
-  axes: { throttle: .6, yaw: -.2, pitch: .1, roll: .4 } });
+  axes: { throttle: .6, yaw: -.2, pitch: .1, roll: .4 }, buttons: [true, false, true, false, false, false, false, true] });
 
 test('WebSocket alimenta fake controller y desconexión activa failsafe', async () => {
   const device = new FakeVirtualController(); const logs: string[] = [];
@@ -19,10 +19,12 @@ test('WebSocket alimenta fake controller y desconexión activa failsafe', async 
     await once(client, 'open'); const [peer] = await accepted;
     const received = once(peer, 'message'); client.send(message(0)); await received;
     assert.deepEqual(device.axes, { throttle: .6, yaw: -(.2 - .03) / .97, pitch: -(.1 - .03) / .97, roll: (.4 - .03) / .97 });
+    assert.deepEqual(device.buttons, [true, false, true, false, false, false, false, true]);
     const duplicate = once(peer, 'message'); client.send(message(0)); await duplicate;
     assert.equal(device.updates.length, 1);
     const peerClosed = once(peer, 'close'); const closed = once(client, 'close'); client.close(); await Promise.all([peerClosed, closed]);
     assert.deepEqual(device.axes, { throttle: 0, yaw: 0, pitch: 0, roll: 0 });
+    assert.deepEqual(device.buttons, Array(8).fill(false));
     assert.ok(logs.includes('FAILSAFE ACTIVE'));
   } finally { client.terminate(); await companion.shutdown(); }
   assert.equal(device.connected, false);

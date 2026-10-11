@@ -1,5 +1,6 @@
+import { normalizeButtons } from '../../../shared/src/index.js';
 import type { VirtualController } from './virtual-controller.js';
-import { safeAxes, type ControllerState, type VirtualControllerAxes } from './virtual-controller.types.js';
+import { safeAxes, type ControllerAxisState, type VirtualControllerAxes } from './virtual-controller.types.js';
 import { ControllerMapper } from './controller-mapper.js';
 
 export interface FailsafeClock {
@@ -40,10 +41,11 @@ export class ControllerSession {
     if (!Number.isFinite(failsafeMs) || failsafeMs <= 0) throw new Error('Invalid failsafeMs.');
     this.startedAt = this.timer.now();
   }
-  receive(state: ControllerState): void {
+  receive(state: ControllerAxisState, buttons: readonly boolean[] = []): void {
     if (this.stopped) return;
     const axes = this.mapper.map(state);
-    this.controller.updateAxes(axes); this.latestAxes = axes;
+    const normalizedButtons = normalizeButtons(buttons);
+    this.controller.updateAxes(axes); this.controller.updateButtons(normalizedButtons); this.latestAxes = axes;
     this.updates += 1; this.failsafe = false;
     this.active = true; this.deadline = this.timer.now() + this.failsafeMs;
     if (!this.cancel) this.schedule();
