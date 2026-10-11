@@ -1,10 +1,11 @@
 #ifndef AppVersion
-#define AppVersion "0.2.0"
+#error AppVersion must be provided by the release script
 #endif
 [Setup]
 AppId={{BA566E62-FFAB-4A0F-A358-5E79BC726EB0}
 AppName=FPV Phone Controller
 AppVersion={#AppVersion}
+VersionInfoVersion={#WindowsVersion}
 AppPublisher=FPV Phone Controller
 DefaultDirName={localappdata}\Programs\FPV Phone Controller
 DefaultGroupName=FPV Phone Controller

@@ -2,8 +2,9 @@
   "name": "FPV Phone Controller",
   "short_name": "FPV Controller",
   "display": "standalone",
-  "scope": "./",
-  "start_url": "./",
+  "display_override": ["standalone", "fullscreen"],
+  "scope": "/",
+  "start_url": "/",
   "icons": [
     {
       "src": "icons/icon-72x72.png",

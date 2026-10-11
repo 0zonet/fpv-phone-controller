@@ -1,43 +1,45 @@
-# FPV Phone Controller — Guía de uso
+# FPV Phone Controller — Beta
 
-Requisitos: PC Windows 11 de 64 bits, teléfono Android con Chrome actualizado y ambos equipos en una red local compartida. No necesitas Node, npm, TypeScript ni Angular CLI.
+## Installation
 
-1. Descarga FPVPhoneControllerSetup.exe desde la publicación oficial del proyecto.
-2. Instala y abre FPV Phone Controller desde el menú Inicio. Se instala para tu usuario y permite desinstalarlo desde Configuración de Windows > Aplicaciones.
-3. Si aparece "Virtual joystick driver not installed", pulsa Install driver. Se abrirán las instrucciones y la página oficial de vJoy. La instalación del driver es independiente y Windows puede solicitar administrador. El companion no lo instala silenciosamente.
-4. Instala vJoy firmado BRUNNER 2.2.2.0 y configura el dispositivo 1 con X, Y, Z y Slider. Cierra otros feeders que puedan ocuparlo. Reinicia el PC si el instalador lo solicita y pulsa Retry en el companion.
-5. Conecta celular y PC a la misma Wi-Fi o usa USB tethering. Si hay varias redes, elige en Advanced > PC network la que comparte el celular.
-6. Comprueba Virtual Controller: Ready. Escanea el QR con la cámara del teléfono y abre el enlace en Chrome.
-7. Se abre https://fpv.brycofre.com/connect y conecta automáticamente. Permite el acceso a red local si Chrome lo solicita. Si el navegador bloquea el primer intento, pulsa Retry. Al conectar aparece el controller y Phone: Connected en Windows. Puedes instalar la PWA desde el menú de Chrome > Añadir a pantalla de inicio / Instalar aplicación. El QR incluye una clave temporal: no lo publiques y vuelve a escanearlo tras reiniciar el companion o cambiar de red.
-8. Comprueba Phone: CONNECTED. Abre Uncrashed y selecciona vJoy Device. Asigna los ejes por movimiento y ejecuta Stick calibration: roll es X, pitch Y, yaw Z y throttle Slider. La numeración Axis N depende del simulador: no supongas que throttle es Axis3. Mantén Throttle gamepad mode desactivado. No configures ARM/AUX; este MVP solo envía cuatro ejes.
+Use a Windows 11 x64 PC and an Android phone. Chrome for Android, updated, is the recommended browser. This beta has been tested end-to-end by the project owner with Uncrashed; other devices, browsers and simulators are not yet certified.
 
-## Verificar en Windows
+Download the Setup from the official beta link, install it and open FPV Phone Controller. No Node.js or development tools are required. The beta installer is unsigned; verify who sent it before accepting any Windows warning.
 
-Pulsa Test joystick o abre Win+R, escribe joy.cpl y acepta. Selecciona vJoy Device > Propiedades > Test.
-Mueve un eje a la vez: X/Y corresponden al stick derecho; Z a yaw; Slider a throttle. Slider debe recorrer de mínimo a máximo. Yaw/roll/pitch vuelven al centro; throttle conserva la posición.
+The virtual joystick requires the separate signed BRUNNER vJoy 2.2.2.0 driver. If it is missing, click Install vJoy to open the download page in your browser. FPV Phone Controller stays open and does not download or install the driver. After installing, click Check again. In Configure vJoy, enable device 1 with X, Y, Z and Slider. Driver installation may ask for administrator permission.
 
-## Firewall y conexión
+## Connecting your phone
 
-Si Windows pide permiso de red, permite solo redes privadas. Nunca desactives el firewall ni abras el puerto en el router.
-Si no conecta, revisa que ambos equipos comparten red y comprueba el permiso de red local de Chrome. Redes de invitados pueden aislar dispositivos. Pulsa Retry; como alternativa, Advanced > Copy connection link permite enviarte el enlace y abrirlo en el teléfono. Enter address manually permite usar el endpoint completo de Advanced > WebSocket endpoint.
-El puerto es 8080. El companion escucha únicamente en la IP local seleccionada y solo acepta clientes de esa subred, el origen permitido y la clave temporal. Al cambiar de interfaz se reinicia la conexión.
-Puedes abrir Firewall para revisar las reglas. La regla, si un administrador la configura, debe limitarse a la aplicación, TCP 8080, perfil Private y LocalSubnet.
-Esta versión usa WebSocket local sin cifrado en una red de confianza. La PWA pública usa HTTPS. No es una solución para controlar por Internet.
-Firefox, Safari y Chrome antiguos no están incluidos en la compatibilidad de esta primera distribución HTTPS + WebSocket local.
+1. Connect PC and phone to the same Wi-Fi, or enable USB tethering on Android.
+2. Wait for Virtual joystick, WebSocket server and Network to show Ready.
+3. Scan the QR with your phone camera and open the link in Chrome.
+4. Allow local-network access if requested. The controller opens automatically and Windows shows Phone: Connected.
 
-## Prueba local antes de publicar
+The public PWA is https://fpv.brycofre.com. You need Internet access to open it initially. You can install it from Chrome's menu.
 
-Si Open PWA dice que no está configurada, esta es una versión de prueba local.
-Con PWA_URL vacío al compilar, el QR abre la web HTTP servida por el propio PC. También puedes abrir Local preview desde Advanced.
-La prueba HTTP funciona como web, pero NO verifica instalación PWA ni service worker en Android. Para eso necesitas la publicación HTTPS.
+Regenerate QR restarts the connection and invalidates the previous link. Scan the new QR. Copy connection link is an alternative. Advanced contains network selection and the manual WebSocket endpoint.
 
-## Uso y cierre
+## Uncrashed setup
 
-Mantén el teléfono con la app visible. Si deja de transmitir durante 250 ms, el companion activa failsafe y baja throttle a cero.
-Al volver, baja el throttle del teléfono antes de reconectar: conserva su posición.
-Cierra la ventana para resetear y liberar el joystick. Una salida forzada del proceso o corte del PC no garantiza el cierre ordenado.
+Select vJoy Device. Assign each axis by moving it alone: roll = X, pitch = Y, yaw = Z, throttle = Slider. Run Stick calibration across the full range. Leave Throttle gamepad mode off. Axis numbers can differ; do not assume throttle is Axis3.
 
-## Publicación y actualizaciones
+To check Windows first: Advanced > Test joystick opens joy.cpl. X/Y must follow the right stick; Z yaw; Slider throttle.
 
-Todavía no hay auto-update: para actualizar, instala una versión nueva. El instalador mantiene la identidad de la aplicación.
-Un instalador de prueba sin firma puede provocar avisos de SmartScreen. Solo ejecútalo si confías en su procedencia. La firma de código y la prueba del flujo HTTPS en un teléfono real deben completarse antes de anunciar una versión pública.
+## Troubleshooting
+
+- Driver required: Install vJoy, configure device 1 and Check again. If the browser cannot open, use Copy download link.
+- Joystick occupied: close other feeders and Retry.
+- Port occupied: close the other companion/app using the displayed port and Retry.
+- No network: connect Wi-Fi/Ethernet or USB tethering; choose the shared network in Advanced.
+- Unable to connect: check both devices share the network, allow local-network access in Chrome and tap Retry. Review Windows private-network firewall permissions. Never disable the firewall or open router ports.
+- Invalid QR: scan the current QR again.
+- Connection lost: restore the network, lower throttle on the phone and Retry. After restarting Windows companion, scan its new QR.
+- Persistent error: Advanced > Open logs folder. Send the logs and your app version to the person who provided the beta. Logs contain local IPs and technical details; they omit continuous stick values and pairing keys.
+
+If packets stop for 250 ms, failsafe resets the controls. Keep the phone app visible. Use only a trusted local network.
+
+## How to uninstall
+
+Close the companion. Windows Settings > Apps > Installed apps > FPV Phone Controller > Uninstall.
+
+vJoy is a separate driver and remains installed. Logs and onboarding preferences remain in %LOCALAPPDATA%/FPVPhoneController; delete that folder manually if desired.

@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { createServer } from 'node:http';
 import { createInterface } from 'node:readline';
 import { dirname, join } from 'node:path';
+import { homedir } from 'node:os';
 import { loadConfig } from '../config.js';
 import { startCompanion } from '../companion.js';
 import { VJoyController } from '../drivers/vjoy/vjoy-controller.js';
@@ -10,75 +11,105 @@ import { authorizedConnection } from '../network/local-network.js';
 import { PairingService } from '../pairing/pairing-service.js';
 import { loadDistributionConfig } from './distribution-config.js';
 import { servePhone } from './static-phone.js';
-
+import { StructuredLogger } from './structured-logger.js';
+import { userIssue, connectionHelp } from './user-errors.js';
+import { PRODUCT_VERSION } from '../../../shared/src/product-version.js';
+const dataDirectory = process.env['FPV_DATA_DIR'] ?? join(process.env['LOCALAPPDATA'] ?? join(homedir(), 'AppData', 'Local'), 'FPVPhoneController');
+const logger = new StructuredLogger(dataDirectory, PRODUCT_VERSION);
 async function main(): Promise<void> {
+  logger.write('startup', { platform: process.platform, arch: process.arch });
   const directory = dirname(process.argv[1]);
   const distribution = loadDistributionConfig(directory);
-  const pairing = new PairingService();
-  const addresses = pairing.getAddresses();
+  const pairing = new PairingService(), addresses = pairing.getAddresses();
   const port = loadConfig().websocketPort;
   const selected = addresses.find(entry => entry.address === process.env['FPV_BIND_ADDRESS']) ?? addresses[0];
   const token = randomBytes(24).toString('hex');
-  const endpoints = addresses.map(entry => ({ name: entry.name, address: entry.address,
-    endpoint: 'ws://' + entry.address + ':' + port + '/?token=' + token }));
+  const endpoints = addresses.map(entry => ({ name: entry.name, address: entry.address, endpoint: 'ws://' + entry.address + ':' + port + '/?token=' + token }));
+  const health = { driver: 'Checking', device: 'Checking', websocket: 'Checking', port: 'Checking', network: selected ? 'Ready' : 'Not available', qr: 'Checking' };
   const state = { type: 'status', version: distribution.version, virtualController: 'NOT AVAILABLE',
-    websocket: 'STOPPED', phone: 'DISCONNECTED', port, addresses: endpoints,
+    websocket: 'STOPPED', phone: 'DISCONNECTED', port, addresses: endpoints, health,
     selectedAddress: selected?.address ?? '', pwaUrl: distribution.pwaUrl,
     localWebUrl: selected ? 'http://' + selected.address + ':' + port : '',
-    pairingUrl: '', qrPngBase64: '', message: '' };
-  const emit = (): void => { process.stdout.write(JSON.stringify(state) + '\n'); };
+    logsDirectory: logger.directory, pairingUrl: '', qrPngBase64: '', issueCode: '', message: '' };
+  const emit = (): void => {
+    if (!logger.available && !state.message) state.message = 'Logs could not be saved. Check disk space and app permissions.';
+    process.stdout.write(JSON.stringify(state) + '\n');
+  };
   const log = (line: string): void => {
-    if (line.startsWith('Virtual controller error:')) {
-      state.virtualController = 'NOT AVAILABLE'; state.websocket = 'STOPPED';
-      state.phone = 'DISCONNECTED'; state.message = line; emit();
-    } else if (line === 'FAILSAFE ACTIVE') { state.message = line; emit(); }
+    // Periodic axis diagnostics stay out of the persisted logs.
+    if (/THR |RAW |CALIBRATED |Client connected:|Client disconnected:/.test(line)) return;
+    if (line.startsWith('Virtual controller:')) {
+      health.driver = health.device = 'Ready'; logger.write('driver_ready'); emit();
+    } else if (line.startsWith('Virtual controller error:')) {
+      const issue = userIssue(line);
+      logger.write('controller_error', { detail: line, code: issue.code }, 'error');
+      health.device = health.websocket = 'Not available';
+      state.virtualController = 'NOT AVAILABLE'; state.websocket = 'STOPPED'; state.phone = 'DISCONNECTED';
+      state.issueCode = issue.code; state.message = issue.message; emit();
+    } else if (line === 'FAILSAFE ACTIVE') {
+      logger.write('failsafe'); state.message = 'Failsafe active. Controls were reset. Lower throttle before reconnecting.'; emit();
+    } else if (/^(WebSocket error:|Shutdown error:)/.test(line)) logger.write('runtime_error', { detail: line }, 'error');
   };
   emit();
   if (!selected) {
-    state.message = 'No local network found. Connect Wi-Fi, Ethernet or USB tethering, then Retry.';
-    emit(); return;
+    health.driver = health.device = health.websocket = health.port = health.qr = 'Not checked';
+    state.issueCode = 'NETWORK_MISSING'; state.message = 'No local network found. Connect Wi-Fi, Ethernet or USB tethering, then Retry.';
+    logger.write('network_missing', {}, 'error'); emit(); return;
   }
+  logger.write('network_selected', { ip: selected.address, port });
   const config = { ...loadConfig(), websocketHost: selected.address };
   const origin = 'http://' + selected.address + ':' + port;
   const origins = [origin, ...(distribution.pwaUrl ? [new URL(distribution.pwaUrl).origin] : [])];
   const http = createServer(servePhone(join(directory, 'phone')));
-  const driver = process.argv.includes('--smoke-test') ? new FakeVirtualController()
-    : new VJoyController(config.controller.deviceId, config.controller.dllPath);
-  let companion: Awaited<ReturnType<typeof startCompanion>>;
+  const driver = process.argv.includes('--smoke-test') ? new FakeVirtualController() : new VJoyController(config.controller.deviceId, config.controller.dllPath);
+  let companion: Awaited<ReturnType<typeof startCompanion>>, phase = 'qr';
   try {
     const invitation = await pairing.create(distribution.pwaUrl || origin, selected.address, port, token);
+    health.qr = 'Ready'; logger.write('qr_generated'); phase = 'companion';
     companion = await startCompanion(config, driver, log, {
       httpServer: http,
       authorize: (peer, requestOrigin, url) => authorizedConnection(peer, requestOrigin, url, selected, origins, token),
       onPhoneStatus: connected => {
-        state.phone = connected ? 'CONNECTED' : 'DISCONNECTED';
-        if (state.websocket !== 'STOPPED') state.message = '';
-        emit();
+        state.phone = connected ? 'CONNECTED' : 'DISCONNECTED'; state.issueCode = connected ? '' : 'PHONE_LOST';
+        state.message = connected ? '' : 'Phone connection lost. Check the network and tap Retry on your phone.';
+        logger.write(connected ? 'phone_connected' : 'phone_disconnected'); emit();
       }
     });
     state.pairingUrl = invitation.url; state.qrPngBase64 = invitation.qrPngBase64;
-    state.virtualController = 'READY'; state.websocket = 'LISTENING'; emit();
+    state.virtualController = 'READY'; state.websocket = 'LISTENING'; health.websocket = health.port = 'Ready';
+    logger.write('server_started', { ip: selected.address, port }); emit();
   } catch (error) {
-    const detail = error instanceof Error ? error.message : String(error);
-    state.message = /not found|not installed|cannot load|missing/i.test(detail)
-      ? 'Virtual joystick driver not installed or unavailable. ' + detail : detail;
+    const issue = phase === 'qr' ? { code: 'QR_FAILED', message: 'QR could not be generated. Retry; if it persists, open the logs folder.' } : userIssue(error);
+    state.issueCode = issue.code; state.message = issue.message;
+    if (phase === 'qr') health.qr = 'Not available';
+    else if (issue.code === 'PORT_BUSY' || issue.code === 'NETWORK_PERMISSION') {
+      health.websocket = health.port = 'Not available'; health.device = 'Released';
+    } else {
+      if (issue.code === 'DRIVER_MISSING' || issue.code === 'DRIVER_MISMATCH') health.driver = 'Not available';
+      if (issue.code === 'DEVICE_BUSY' || issue.code === 'DEVICE_UNAVAILABLE') health.driver = 'Ready';
+      health.device = 'Not available'; health.websocket = health.port = 'Not checked';
+    }
+    logger.write('startup_error', { code: issue.code, detail: error instanceof Error ? error.stack ?? error.message : String(error) }, 'error');
     emit(); return;
   }
+  const waiting = setTimeout(() => {
+    if (state.phone === 'DISCONNECTED' && !state.message) {
+      state.issueCode = 'CONNECTION_HELP'; state.message = connectionHelp; logger.write('connection_help_shown'); emit();
+    }
+  }, 45000); waiting.unref();
   let closing = false;
   async function shutdown(): Promise<void> {
-    if (closing) return; closing = true;
-    try { await companion.shutdown(); }
-    catch (error) { process.stderr.write(String(error) + '\n'); }
-    state.websocket = 'STOPPED'; state.virtualController = 'NOT AVAILABLE'; state.phone = 'DISCONNECTED'; emit();
-    process.exit();
+    if (closing) return; closing = true; clearTimeout(waiting);
+    try { await companion.shutdown(); } catch (error) { logger.write('shutdown_error', { detail: String(error) }, 'error'); }
+    state.websocket = 'STOPPED'; state.virtualController = 'NOT AVAILABLE'; state.phone = 'DISCONNECTED';
+    health.websocket = 'Stopped'; health.device = 'Released'; logger.write('shutdown'); emit(); process.exit();
   }
   const input = createInterface({ input: process.stdin });
   input.on('line', line => { if (line === 'shutdown') void shutdown(); });
   input.on('close', () => { void shutdown(); });
-  process.once('SIGINT', () => { void shutdown(); });
-  process.once('SIGTERM', () => { void shutdown(); });
+  process.once('SIGINT', () => { void shutdown(); }); process.once('SIGTERM', () => { void shutdown(); });
 }
 void main().catch(error => {
-  process.stdout.write(JSON.stringify({ type: 'fatal', message: String(error) }) + '\n');
-  process.exitCode = 1;
+  logger.write('fatal', { detail: error instanceof Error ? error.stack ?? error.message : String(error) }, 'error');
+  process.stdout.write(JSON.stringify({ type: 'fatal', message: userIssue(error).message }) + '\n'); process.exitCode = 1;
 });

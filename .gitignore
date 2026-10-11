@@ -4,3 +4,5 @@ dist/
 *.log
 work/
 .tools/
+release/
+shared/src/product-version.ts

@@ -7,7 +7,10 @@ import { windowsCompiler } from './windows-tools.mjs';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const compiler = await windowsCompiler(root);
 const version = JSON.parse(await readFile(join(root, 'package.json'), 'utf8')).version;
-execFileSync(compiler, ['/DAppVersion=' + version, join(root, 'desktop/windows/installer.iss')], { stdio: 'inherit' });
+const match = /^(\d+)\.(\d+)\.(\d+)(?:-beta\.(\d+))?$/.exec(version);
+if (!match) throw new Error('Unsupported product version');
+const windowsVersion = match.slice(1, 4).join('.') + '.' + (match[4] ?? '0');
+execFileSync(compiler, ['/DAppVersion=' + version, '/DWindowsVersion=' + windowsVersion, join(root, 'desktop/windows/installer.iss')], { stdio: 'inherit' });
 const installer = join(root, 'dist/FPVPhoneControllerSetup.exe');
 const distribution = JSON.parse(await readFile(join(root, 'dist/windows/distribution.json'), 'utf8'));
 await writeFile(join(root, 'dist/release.json'), JSON.stringify({

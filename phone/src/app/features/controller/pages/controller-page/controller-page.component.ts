@@ -7,6 +7,9 @@ import { ControllerTransmissionService } from '../../../../core/services/control
 import { VirtualStickComponent } from '../../components/virtual-stick/virtual-stick.component';
 import { ControllerDebugComponent } from '../../components/controller-debug/controller-debug.component';
 import { ConnectionStatusComponent } from '../../components/connection-status/connection-status.component';
+import { PRODUCT_VERSION } from '../../../../../../../shared/src/product-version';
+import { validEndpoint, publicEndpoint, editEndpoint } from '../../../../core/services/connection-address';
+import { PwaRuntimeService } from '../../../../core/services/pwa-runtime.service';
 
 @Component({
   selector: 'app-controller-page', standalone: true, changeDetection: ChangeDetectionStrategy.OnPush,
@@ -16,28 +19,55 @@ import { ConnectionStatusComponent } from '../../components/connection-status/co
   templateUrl: './controller-page.component.html', styleUrl: './controller-page.component.css'
 })
 export class ControllerPageComponent {
+  readonly version = PRODUCT_VERSION;
   readonly controller = inject(ControllerStateService);
   readonly transport = inject(ControllerTransportService);
   private readonly transmission = inject(ControllerTransmissionService);
-  readonly address = signal(this.readAddress());
+  readonly pwa = inject(PwaRuntimeService);
+  private readonly endpoint = signal(this.readAddress());
+  readonly paired = computed(() => !!validEndpoint(this.endpoint()));
+  readonly manualAddress = signal(publicEndpoint(this.endpoint()));
+  readonly manualDetails = computed(() => {
+    const endpoint = validEndpoint(this.manualAddress());
+    if (!endpoint) return null;
+    const url = new URL(endpoint);
+    return { host: url.hostname, port: url.port || (url.protocol === 'wss:' ? '443' : '80') };
+  });
+  private draftEndpoint = this.endpoint();
+  readonly manualError = signal('');
   readonly fullscreenMessage = signal('');
   readonly fullscreen = signal(!!document.fullscreenElement);
   readonly settingsOpen = signal(false);
   readonly debugOpen = signal(false);
-  readonly showConnection = computed(() => this.transport.status() !== 'connected' || this.settingsOpen());
+  readonly showConnection = computed(() => this.transport.status() !== 'connected');
   readonly throttlePercent = computed(() => Math.round(this.controller.state().throttle * 100));
 
-  updateAddress(value: string): void { this.address.set(value); }
+  updateManualAddress(value: string, input: HTMLInputElement): void {
+    this.draftEndpoint = editEndpoint(value, this.draftEndpoint);
+    const visible = publicEndpoint(value);
+    this.manualAddress.set(visible); input.value = visible;
+    this.manualError.set('');
+  }
+  pasteManualAddress(event: ClipboardEvent, input: HTMLInputElement): void {
+    const value = event.clipboardData?.getData('text'); if (!value) return;
+    event.preventDefault(); this.updateManualAddress(value, input);
+  }
+  connectManual(): void {
+    const parsed = validEndpoint(this.draftEndpoint);
+    if (!parsed) { this.manualError.set('Introduce una dirección WebSocket válida.'); return; }
+    this.endpoint.set(parsed); this.connect();
+  }
   connect(): void {
-    const address = this.address().trim();
+    const address = validEndpoint(this.endpoint());
+    if (!address) return;
     try { localStorage.setItem('fpv-controller-address', address); } catch { /* Storage may be disabled. */ }
     this.transport.connect(address);
     this.settingsOpen.set(false);
   }
   disconnect(): void { this.transport.disconnect(); }
   private readAddress(): string {
-    try { const stored = localStorage.getItem('fpv-controller-address'); if (stored) return stored; } catch { /* Use host fallback. */ }
-    return environment.defaultWebSocketEndpoint;
+    try { const stored = localStorage.getItem('fpv-controller-address'); if (stored) return validEndpoint(stored) ?? ''; } catch { /* Use host fallback. */ }
+    return validEndpoint(environment.defaultWebSocketEndpoint) ?? '';
   }
 
   syncFullscreen(): void {

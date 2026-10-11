@@ -4,7 +4,10 @@
   "scripts": {
     "start": "ng serve --host 0.0.0.0",
     "build": "ng build",
-    "test": "tsc -p tsconfig.spec.json && tsx --test src/app/core/services/*.spec.ts src/app/features/controller/utils/*.spec.ts"
+    "test": "tsc -p tsconfig.spec.json && tsx --test src/app/core/services/*.spec.ts src/app/features/controller/utils/*.spec.ts",
+    "prebuild": "node ../scripts/generate-version.mjs",
+    "pretest": "node ../scripts/generate-version.mjs",
+    "prestart": "node ../scripts/generate-version.mjs"
   },
   "dependencies": {
     "@angular/common": "^20.3.0",

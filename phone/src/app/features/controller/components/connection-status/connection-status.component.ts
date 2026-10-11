@@ -12,7 +12,8 @@ import { ConnectionStatus } from '../../../../core/models/connection-status.mode
 })
 export class ConnectionStatusComponent {
   readonly status = input<ConnectionStatus>('disconnected');
-  readonly label = computed(() => ({
-    connected: 'Conectado', connecting: 'Conectando…', disconnected: 'Sin conexión', error: 'Error'
+  readonly lost = input(false);
+  readonly label = computed(() => this.lost() ? 'Conexión perdida' : ({
+    connected: 'Conectado', connecting: 'Conectando…', disconnected: 'Sin conexión', error: 'No se pudo conectar'
   })[this.status()]);
 }

@@ -1,5 +1,7 @@
 # Distribución del MVP
 
+Para la primera beta, el comando completo es npm run release y los artefactos versionados quedan en release/. Consulta DEVELOPER_README.md y CLEAN_PC_CHECKLIST.md como guías actuales; los comandos siguientes también permiten builds individuales.
+
 ## Decisión técnica
 
 Se reutilizan protocolo, ControllerMapper, ControllerSession/failsafe, validación y VJoyController.

@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { PairingFlowService } from '../../core/services/pairing-flow.service';
+import { PRODUCT_VERSION } from '../../../../../shared/src/product-version';
 @Component({
   selector: 'app-connect-page',
   standalone: true,
@@ -7,12 +8,13 @@ import { PairingFlowService } from '../../core/services/pairing-flow.service';
   template: `
     <main aria-live="polite">
       <section>
-        <span class="brand">FPV</span>
+        <span class="brand">FPV</span><p>v{{ version }}</p>
         @if (flow.error()) {
           <h1>Unable to connect to PC</h1>
+          @if (!flow.canRetry()) { <p>Este QR no es válido. Escanea el QR actual del companion.</p> }
           <p>Comprueba que el companion está abierto y ambos dispositivos están en la misma red. Permite el acceso a la red local si el navegador lo solicita.</p>
           @if (flow.canRetry()) { <button (click)="flow.retry()">Retry</button> }
-          <button class="secondary" (click)="flow.manual()">Enter address manually</button>
+          <button class="secondary" (click)="flow.manual()">Manual connection</button>
         } @else {
           <div class="spinner" aria-hidden="true"></div>
           <h1>Connecting to PC...</h1>
@@ -30,4 +32,4 @@ import { PairingFlowService } from '../../core/services/pairing-flow.service';
     @keyframes spin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.spinner{animation:none}}
   `]
 })
-export class ConnectPageComponent { readonly flow = inject(PairingFlowService); }
+export class ConnectPageComponent { readonly flow = inject(PairingFlowService); readonly version = PRODUCT_VERSION; }

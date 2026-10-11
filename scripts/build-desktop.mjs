@@ -1,5 +1,5 @@
 import { build } from 'esbuild';
-import { cp, mkdir, readFile, writeFile, copyFile, access } from 'node:fs/promises';
+import { cp, mkdir, readFile, writeFile, copyFile, access, rm } from 'node:fs/promises';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
@@ -12,6 +12,8 @@ const distributionDefaults = JSON.parse(await readFile(join(root, 'distribution.
 const pwaUrl = process.env.PWA_URL ?? distributionDefaults.pwaUrl;
 if (pwaUrl && new URL(pwaUrl).protocol !== 'https:') throw new Error('PWA_URL must be HTTPS.');
 const output = join(root, 'dist/windows');
+if (resolve(output) !== resolve(root, 'dist/windows')) throw new Error('Invalid build directory');
+await rm(output, { recursive: true, force: true });
 await mkdir(join(output, 'runtime'), { recursive: true });
 await build({ absWorkingDir: root, entryPoints: ['desktop/src/distribution/windows-entry.ts'],
   outfile: join(output, 'companion.cjs'), bundle: true, platform: 'node', format: 'cjs', target: 'node24',
@@ -31,12 +33,16 @@ const csc = join(process.env.WINDIR ?? 'C:/Windows', 'Microsoft.NET/Framework64/
 await access(csc);
 const assembly = join(root, '.tools', 'AssemblyInfo.cs');
 await mkdir(dirname(assembly), { recursive: true });
-await writeFile(assembly, '[assembly:System.Reflection.AssemblyVersion("' + version + '.0")]\n' +
-  '[assembly:System.Reflection.AssemblyFileVersion("' + version + '.0")]\n');
+const match = /^(\d+)\.(\d+)\.(\d+)(?:-beta\.(\d+))?$/.exec(version);
+if (!match) throw new Error('Unsupported product version');
+const windowsVersion = match.slice(1, 4).join('.') + '.' + (match[4] ?? '0');
+await writeFile(assembly, '[assembly:System.Reflection.AssemblyVersion("' + windowsVersion + '")]\n' +
+  '[assembly:System.Reflection.AssemblyFileVersion("' + windowsVersion + '")]\n' +
+  '[assembly:System.Reflection.AssemblyInformationalVersion("' + version + '")]\n');
 execFileSync(csc, ['/nologo', '/target:winexe', '/platform:x64', '/optimize+',
   '/reference:System.Windows.Forms.dll', '/reference:System.Drawing.dll', '/reference:System.Web.Extensions.dll',
   '/win32icon:' + join(root, 'desktop/windows/app.ico'), '/out:' + join(output, 'FPVPhoneController.exe'),
-  join(root, 'desktop/windows/CompanionWindow.cs'), assembly], { stdio: 'inherit' });
+  join(root, 'desktop/windows/CompanionWindow.cs'), join(root, 'desktop/windows/DesktopConfiguration.cs'), assembly], { stdio: 'inherit' });
 await copyFile(join(root, 'USER_README.md'), join(output, 'USER_README.md'));
 const escape = text => text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 const text = await readFile(join(root, 'USER_README.md'), 'utf8');

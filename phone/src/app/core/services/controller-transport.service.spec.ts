@@ -7,6 +7,26 @@ import { SOCKET_FACTORY, TRANSPORT_CLOCK } from './transport-runtime';
 import { FakeClock, FakeSocket } from './transport-test-runtime';
 
 const axes = { throttle: .42, yaw: -.14, pitch: .72, roll: .05 };
+test('browser exceptions never reveal the pairing URL or token to UI errors', () => {
+  const injector = Injector.create({providers: [
+    {provide: SOCKET_FACTORY, useValue: () => { throw new Error('ws://192.168.1.92:8080/?token=private-token'); }},
+    {provide: TRANSPORT_CLOCK, useValue: new FakeClock()}
+  ]});
+  const transport = runInInjectionContext(injector, () => new ControllerTransportService());
+  transport.connect('ws://192.168.1.92:8080/?token=private-token');
+  assert.equal(transport.status(), 'error');
+  assert.doesNotMatch(transport.errorMessage(), /private-token|token=|192\.168/);
+});
+test('lost connection is distinct from intentional disconnect and failed first connect', () => {
+  const { transport, sockets } = setup();
+  transport.connect('ws://localhost:8080'); sockets[0].error();
+  assert.equal(transport.connectionLost(), false);
+  transport.connect('ws://localhost:8080'); sockets[1].open(); sockets[1].close();
+  assert.equal(transport.connectionLost(), true);
+  transport.connect('ws://localhost:8080'); assert.equal(transport.connectionLost(), false);
+  sockets[2].open(); sockets[2].error(); assert.equal(transport.connectionLost(), true);
+  transport.disconnect(); assert.equal(transport.connectionLost(), false);
+});
 test('diagnóstico mide envíos efectivos, sequence y backpressure sin timers adicionales', () => {
   const { transport, sockets, clock } = setup();
   transport.connect('ws://localhost:8080'); sockets[0].open();

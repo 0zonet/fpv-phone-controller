@@ -21,6 +21,8 @@ input { min-width: 0; flex: 1; width: 100%; box-sizing: border-box; padding: 12p
 input:disabled { color: #9eafbd; }
 .primary { background: #4ce3b2; color: #06241b; border-color: #4ce3b2; padding: 0 14px; font-weight: 650; }
 .secondary { background: #192c3b; color: #eaf3fa; padding: 0 12px; }
+.connection-panel > h2 { margin-bottom: 12px; }
+.connection-panel p { font-size: 12px; color: #a0b3c3; line-height: 1.5; }
 .sticks { flex: 1; display: grid; grid-template-columns: 1fr; align-content: space-evenly; gap: 18px; }
 .stick-card { min-width: 0; width: min(100%, 390px); margin: auto; }
 .stick-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; padding: 0 5px; }

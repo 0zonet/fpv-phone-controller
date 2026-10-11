@@ -12,6 +12,8 @@ export class ControllerTransportService implements OnDestroy {
   private readonly failure = signal('');
   readonly status = this.connection.asReadonly();
   readonly errorMessage = this.failure.asReadonly();
+  private readonly lostValue = signal(false);
+  readonly connectionLost = this.lostValue.asReadonly();
   private socket: TransportSocket | null = null;
   private sequence = 0;
   private readonly lastSequenceValue = signal<number | null>(null);
@@ -46,11 +48,13 @@ export class ControllerTransportService implements OnDestroy {
       });
       socket.addEventListener('close', () => {
         if (this.socket !== socket) return;
+        this.lostValue.set(this.connection() === 'connected');
         this.clearTimeout(); this.socket = null; this.rateValue.set(0); this.connection.set('disconnected');
       });
-    } catch (error) { this.fail(error instanceof Error ? error.message : 'No se pudo abrir WebSocket.'); }
+    } catch { this.fail('No se pudo abrir la conexión. Revisa la configuración o escanea el QR actual.'); }
   }
   disconnect(): void {
+    this.lostValue.set(false);
     this.clearTimeout();
     const socket = this.socket; this.socket = null;
     this.connection.set('disconnected');
@@ -79,6 +83,8 @@ export class ControllerTransportService implements OnDestroy {
   ngOnDestroy(): void { this.disconnect(); }
   private clearTimeout(): void { this.cancelTimeout?.(); this.cancelTimeout = undefined; }
   private fail(message: string): void {
+    const wasConnected = this.connection() === 'connected';
     this.disconnect(); this.failure.set(message); this.connection.set('error');
+    this.lostValue.set(wasConnected);
   }
 }

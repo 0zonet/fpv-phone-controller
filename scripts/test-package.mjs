@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawn, execFileSync } from 'node:child_process';
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile, rm } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { createServer } from 'node:net';
 import { join, resolve, dirname } from 'node:path';
@@ -12,9 +12,10 @@ const qrRequire = createRequire(sourceRequire.resolve('qrcode'));
 const { PNG } = qrRequire('pngjs');
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const directory = join(root, 'dist/windows');
+const dataDirectory = join(root, 'work/package-test-' + Date.now());
 const require = createRequire(join(directory, 'companion.cjs'));
 assert.equal(typeof require('koffi').load, 'function');
-execFileSync(join(directory, 'FPVPhoneController.exe'), ['--self-test'], { timeout: 10000 });
+execFileSync(join(directory, 'FPVPhoneController.exe'), ['--self-test'], { timeout: 10000, env: { ...process.env, FPV_DATA_DIR: dataDirectory } });
 const manifest = JSON.parse(await readFile(join(directory, 'phone/manifest.webmanifest'), 'utf8'));
 assert.equal(manifest.display, 'standalone'); assert.equal(manifest.orientation, 'landscape');
 const ngsw = JSON.parse(await readFile(join(directory, 'phone/ngsw.json'), 'utf8'));
@@ -25,7 +26,7 @@ await new Promise(resolve => probe.listen(0, resolve));
 const port = probe.address().port;
 await new Promise(resolve => probe.close(resolve));
 const child = spawn(join(directory, 'runtime/companion-engine.exe'), [join(directory, 'companion.cjs'), '--smoke-test'], {
-  cwd: directory, env: { ...process.env, PORT: String(port), NODE_OPTIONS: '', NODE_PATH: '',
+  cwd: directory, env: { ...process.env, FPV_DATA_DIR: dataDirectory, PORT: String(port), NODE_OPTIONS: '', NODE_PATH: '',
     PATH: join(process.env.WINDIR, 'System32') + ';' + process.env.WINDIR }, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true
 });
 let buffer = '', errors = '', connected = false, stopped = false;
@@ -59,6 +60,12 @@ try {
   const endpoint = state.addresses.find(entry => entry.address === state.selectedAddress).endpoint;
   const origin = state.localWebUrl;
   assert.equal(state.virtualController, 'READY');
+  assert.ok(Object.values(state.health).every(value => value === 'Ready'));
+  assert.equal(state.version, JSON.parse(await readFile(join(root, 'package.json'), 'utf8')).version);
+  const fixture = join(dataDirectory, 'status-fixture.json');
+  await writeFile(fixture, JSON.stringify(state));
+  try { execFileSync(join(directory, 'FPVPhoneController.exe'), ['--self-test', fixture], {timeout:10000, env: { ...process.env, FPV_DATA_DIR: dataDirectory }}); }
+  finally { await rm(fixture); }
   const link = new URL(state.pairingUrl);
   assert.equal(link.pathname, '/connect');
   const payload = JSON.parse(Buffer.from(link.searchParams.get('data'), 'base64url').toString('utf8'));
@@ -86,5 +93,9 @@ try {
     const timer = setTimeout(() => reject(new Error('Shutdown timeout')), 5000); timer.unref();
   })]);
   assert.equal(code, 0); assert.ok(stopped);
-  console.log('PASS: native window, decoded QR, pairing route, packaged Koffi, PWA, LAN authorization, WebSocket, shutdown.');
+  const logText = await readFile(join(state.logsDirectory, 'companion.jsonl'), 'utf8');
+  const events = logText.trim().split('\n').map(line => JSON.parse(line).event);
+  for (const event of ['startup','driver_ready','network_selected','qr_generated','server_started','phone_connected','phone_disconnected','failsafe','shutdown']) assert.ok(events.includes(event), event);
+  assert.ok(!logText.includes(payload.token)); assert.doesNotMatch(logText, /THR /);
+  console.log('PASS: native QR UI, health, version, decoded QR, PWA route, authorized WebSocket, structured logs and shutdown.');
 } finally { clearTimeout(startup); socket?.terminate(); if (child.exitCode === null) child.kill(); }
