@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import type { StickValue } from '../../../../core/models/stick-state.model';
-import { limitToCircle, pointerToValue, releaseValue, valueToVisual } from '../../utils/stick-math';
+import { limitToCircle, pointerToValue, releaseValue, valueToKnobOffset } from '../../utils/stick-math';
 
 @Component({
   selector: 'app-virtual-stick', standalone: true, changeDetection: ChangeDetectionStrategy.OnPush,
@@ -17,9 +17,13 @@ export class VirtualStickComponent {
   readonly yReturnToCenter = input(true);
   readonly invertY = input(true);
   readonly label = input('Stick virtual');
+  readonly tone = input<'left' | 'right'>('left');
   readonly valueChange = output<StickValue>();
   readonly value = computed(() => limitToCircle({ x: this.xValue(), y: this.yValue() }));
-  readonly visual = computed(() => valueToVisual(this.value(), this.invertY()));
+  readonly knobTransform = computed(() => {
+    const offset = valueToKnobOffset(this.value(), this.invertY());
+    return 'translate(' + offset.x.toFixed(2) + '%, ' + offset.y.toFixed(2) + '%)';
+  });
   readonly active = computed(() => this.pointerId() !== null);
   private readonly pointerId = signal<number | null>(null);
   private target: HTMLElement | null = null;

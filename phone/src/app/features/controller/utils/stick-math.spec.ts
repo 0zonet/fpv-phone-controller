@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { clamp, limitToCircle, normalize, pointerToValue, releaseValue, valueToVisual } from './stick-math';
+import { clamp, limitToCircle, normalize, pointerToValue, releaseValue, valueToKnobOffset, valueToVisual } from './stick-math';
 
 const bounds = { left: 20, top: 40, width: 200, height: 200 };
 const close = (actual: number, expected: number) => assert.ok(Math.abs(actual - expected) < 1e-10);
@@ -52,4 +52,12 @@ test('persistencia del izquierdo centra X y mantiene exactamente Y al soltar o c
     const released = releaseValue(value, { x: true, y: false });
     assert.equal(released.x, 0); assert.equal(released.y, value.y);
   }
+});
+test('desplazamiento del knob en % de su propio tamaño, para transform', () => {
+  const travel = .34 / .26 * 100;
+  assert.deepEqual(valueToKnobOffset({ x: 0, y: 0 }), { x: 0, y: -0 });
+  close(valueToKnobOffset({ x: 1, y: 0 }).x, travel);
+  close(valueToKnobOffset({ x: 0, y: 1 }).y, -travel);
+  close(valueToKnobOffset({ x: 0, y: 1 }, false).y, travel);
+  close(Math.hypot(valueToKnobOffset({ x: 3, y: 4 }).x, valueToKnobOffset({ x: 3, y: 4 }).y), travel);
 });

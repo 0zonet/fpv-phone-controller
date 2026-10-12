@@ -33,3 +33,14 @@ export function valueToVisual(value: StickValue, invertY = true): StickValue {
 export function releaseValue(value: StickValue, policy: ReturnPolicy): StickValue {
   return limitToCircle({ x: policy.x ? 0 : value.x, y: policy.y ? 0 : value.y });
 }
+/** Knob diameter relative to the stick surface. */
+export const KNOB_RATIO = 0.26;
+/**
+ * Knob offset as a percentage of the knob's own size, for `transform: translate()`
+ * (transform percentages refer to the element itself, so no layout is triggered).
+ */
+export function valueToKnobOffset(value: StickValue, invertY = true): StickValue {
+  const circular = limitToCircle(value);
+  const travel = TRAVEL_RATIO / KNOB_RATIO * 100;
+  return { x: circular.x * travel, y: circular.y * travel * (invertY ? -1 : 1) };
+}

@@ -58,6 +58,6 @@
   "id": "/",
   "description": "Control FPV desde tu teléfono",
   "orientation": "landscape",
-  "theme_color": "#08121c",
-  "background_color": "#08121c"
+  "theme_color": "#0D0D12",
+  "background_color": "#0D0D12"
 }

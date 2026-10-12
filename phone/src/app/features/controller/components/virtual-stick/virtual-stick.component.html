@@ -1,10 +1,13 @@
-<div #surface class="stick" role="group" tabindex="0" [attr.aria-label]="label()"
+<div #surface class="stick" role="group" tabindex="0" [attr.aria-label]="label()" [class.right]="tone() === 'right'"
   aria-description="Usa el tacto o las flechas del teclado. Escape devuelve los ejes configurados al centro."
   [class.active]="active()"
   (pointerdown)="onPointerDown($event, surface)" (pointermove)="onPointerMove($event)"
   (pointerup)="onPointerUp($event)" (pointercancel)="onPointerCancel($event)"
   (lostpointercapture)="onPointerCancel($event)" (keydown)="onKeyDown($event)" (keyup)="onKeyUp($event)">
-  <span class="cross horizontal" aria-hidden="true"></span>
-  <span class="cross vertical" aria-hidden="true"></span>
-  <span class="knob" aria-hidden="true" [style.left.%]="visual().x" [style.top.%]="visual().y"></span>
+  <svg class="marks" viewBox="0 0 240 240" aria-hidden="true">
+    <circle cx="120" cy="120" r="78" fill="none" stroke="rgba(255,255,255,0.07)" stroke-dasharray="2 6" />
+    <circle cx="120" cy="120" r="12" fill="none" stroke="rgba(255,255,255,0.12)" />
+    <path d="M120 22v18M120 200v18M22 120h18M200 120h18" stroke="rgba(255,255,255,0.18)" stroke-linecap="round" />
+  </svg>
+  <span class="knob" aria-hidden="true" [style.transform]="knobTransform()"></span>
 </div>

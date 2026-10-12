@@ -1,18 +1,29 @@
 :host { display: flex; justify-content: center; }
 .stick {
-  width: var(--stick-size, min(65vw, 30dvh)); aspect-ratio: 1; position: relative;
-  border: 1px solid #345168; border-radius: 50%;
-  background: radial-gradient(circle, #1c3143, #0c1824);
-  touch-action: none; user-select: none; -webkit-user-select: none;
+  width: var(--stick-size, 240px); aspect-ratio: 1; position: relative; border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  background: radial-gradient(circle at 50% 50%, rgba(139, 124, 255, 0.07), rgba(255, 255, 255, 0.02) 70%);
+  touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab;
 }
-.stick.active { border-color: #4ce3b2; box-shadow: 0 0 0 4px #4ce3b20d; }
-.stick:focus-visible { outline: 2px solid #4ce3b2; outline-offset: 4px; }
-.cross { position: absolute; background: #345168; pointer-events: none; }
-.horizontal { height: 1px; left: 8%; right: 8%; top: 50%; }
-.vertical { width: 1px; top: 8%; bottom: 8%; left: 50%; }
+.stick.right { background: radial-gradient(circle at 50% 50%, rgba(110, 155, 255, 0.07), rgba(255, 255, 255, 0.02) 70%); }
+.stick.active { border-color: rgba(255, 255, 255, 0.18); cursor: grabbing; }
+.stick:focus-visible { outline: 2px solid var(--fpv-ink); outline-offset: 4px; }
+.marks { position: absolute; inset: -1px; width: calc(100% + 2px); height: calc(100% + 2px); pointer-events: none; }
+/* Positioned with transform only: each pointermove composites without layout or paint. */
 .knob {
-  position: absolute; width: 24%; height: 24%; transform: translate(-50%, -50%);
-  border: 1px solid #7af0cc; box-sizing: border-box; border-radius: 50%;
-  background: #4ce3b2; box-shadow: 0 4px 24px #4ce3b230; pointer-events: none;
+  position: absolute; left: 37%; top: 37%; width: 26%; height: 26%; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle at 34% 30%, rgba(255, 255, 255, 0.55), transparent 32%),
+    linear-gradient(150deg, var(--fpv-lava-pink), var(--fpv-lava-violet) 55%, var(--fpv-lava-blue));
+  box-shadow: 0 0 20px rgba(139, 124, 255, 0.5), inset -6px -8px 14px rgba(20, 10, 60, 0.25);
+  will-change: transform;
 }
-.stick.active .knob { background: #78f0cd; box-shadow: 0 0 32px #4ce3b250; }
+.right .knob {
+  background: radial-gradient(circle at 34% 30%, rgba(255, 255, 255, 0.55), transparent 32%),
+    linear-gradient(150deg, var(--fpv-lava-violet), var(--fpv-lava-blue) 60%, #5FC3FF);
+  box-shadow: 0 0 20px rgba(110, 155, 255, 0.5), inset -6px -8px 14px rgba(20, 10, 60, 0.25);
+}
+/* Return to center is visual only: the sent value is already 0. */
+@media (prefers-reduced-motion: no-preference) {
+  .knob { transition: transform .18s cubic-bezier(.3, 1.4, .5, 1); }
+  .stick.active .knob { transition: none; }
+}

@@ -1,42 +1,91 @@
-<main [class.has-panel]="showConnection() || settingsOpen() || debugOpen()">
-  <header class="toolbar">
-    <div class="brand">FPV <span>MODE 2</span></div>
-    <app-connection-status [status]="transport.status()" [lost]="transport.connectionLost()" />
+<main [class.offline]="!connected()">
+  <div class="glow" aria-hidden="true"></div>
+
+  <header class="top">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c.6 4.9 3.1 7.4 8 8-4.9.6-7.4 3.1-8 8-.6-4.9-3.1-7.4-8-8 4.9-.6 7.4-3.1 8-8Z" /></svg>
+      <span>FPV</span>
+    </div>
+    <span class="mode-chip">MODE 2</span>
+    <div class="pill-slot">
+      <app-connection-status [status]="transport.status()" [lost]="transport.connectionLost()"
+        [rate]="transport.packetsPerSecond()" (disconnect)="disconnect()" />
+    </div>
     <nav aria-label="Opciones del mando">
-      <button class="icon-button" type="button" aria-label="Ajustes de conexión" title="Ajustes"
-        [attr.aria-expanded]="settingsOpen()" aria-controls="advanced-connection" [class.selected]="settingsOpen()"
-        (click)="settingsOpen.set(!settingsOpen())"><app-controller-icon name="settings" /></button>
-      <button class="icon-button" type="button" aria-label="Ver diagnóstico" title="Diagnóstico"
-        [attr.aria-expanded]="debugOpen()" aria-controls="debug-panel" [class.selected]="debugOpen()"
-        (click)="debugOpen.set(!debugOpen())"><app-controller-icon name="debug" /></button>
+      <button class="icon-button" type="button" aria-label="Valores en vivo" title="Valores en vivo"
+        [attr.aria-pressed]="liveValues()" (click)="liveValues.set(!liveValues())"><app-controller-icon name="live" /></button>
+      <button class="icon-button" type="button" aria-label="Ajustes" title="Ajustes"
+        [attr.aria-expanded]="settingsOpen()" aria-controls="settings-sheet" (click)="settingsOpen.set(!settingsOpen())"><app-controller-icon name="settings" /></button>
       <button class="icon-button" type="button" [attr.aria-label]="fullscreen() ? 'Salir de pantalla completa' : 'Pantalla completa'"
         [title]="fullscreen() ? 'Salir de pantalla completa' : 'Pantalla completa'" (click)="toggleFullscreen()">
         <app-controller-icon [name]="fullscreen() ? 'collapse' : 'expand'" /></button>
     </nav>
   </header>
 
-  @if (showConnection() && !settingsOpen()) {
-    <section class="connection-panel" aria-live="polite">
-      <h2>Conectar al PC</h2>
-      @if (paired()) {
-        @if (transport.status() === 'connecting') {
-          <button class="secondary" type="button" (click)="disconnect()">Cancelar</button>
-        } @else {
-          <button class="primary" type="button" (click)="connect()"><app-controller-icon name="connect" />Conectar</button>
-        }
-        @if (transport.status() === 'error') {
-          <p class="error-message" role="alert">No se pudo conectar. Comprueba la red y el companion; si lo reiniciaste, escanea su nuevo QR.</p>
-        }
+  <section class="deck" aria-label="Controles de vuelo">
+    <div class="throttle-bar" role="meter" aria-label="Throttle" aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="throttlePercent()">
+      <span [style.transform]="'scaleY(' + controller.throttle() + ')'"></span>
+    </div>
+
+    <article class="stick-col">
+      <div class="stick-head">
+        <h1 class="eyebrow">YAW · THROTTLE</h1>
+        <output class="throttle" aria-label="Throttle">{{ throttlePercent() }}<small>%</small></output>
+      </div>
+      <app-virtual-stick class="stick" tone="left" label="Yaw y throttle" [xValue]="controller.leftStick().x" [yValue]="controller.leftStick().y"
+        [xReturnToCenter]="true" [yReturnToCenter]="false" [invertY]="true" (valueChange)="controller.setLeftStick($event)" />
+      <p class="readout">@if (liveValues()) { Y {{ yawText() }} } @else { throttle se mantiene }</p>
+    </article>
+
+    <section class="buttons" aria-label="Botones del mando">
+      @for (button of buttonConfigs; track button.index) {
+        <app-virtual-button [label]="button.label" [mode]="button.mode" [kind]="button.index === 0 ? 'arm' : 'default'"
+          [pressed]="controller.buttons()[button.index]" [disabled]="!connected()"
+          (pressedChange)="controller.setButton(button.index, $event)" />
+      }
+    </section>
+
+    <article class="stick-col">
+      <div class="stick-head">
+        <h2 class="eyebrow">ROLL · PITCH</h2>
+        @if (liveValues()) { <span class="pair">R {{ rollText() }} · P {{ pitchText() }}</span> }
+      </div>
+      <app-virtual-stick class="stick" tone="right" label="Roll y pitch" [xValue]="controller.rightStick().x" [yValue]="controller.rightStick().y"
+        [xReturnToCenter]="true" [yReturnToCenter]="true" [invertY]="true" (valueChange)="controller.setRightStick($event)" />
+      <p class="readout">centro al soltar</p>
+    </article>
+
+    <div class="dots" aria-hidden="true"><span></span><span></span><span class="mid"></span><span></span><span></span></div>
+  </section>
+
+  @if (!connected() && !settingsOpen()) {
+    <section aria-live="polite" [class]="'card connection-card ' + card().tone">
+      <div class="card-text">
+        <span class="eyebrow">{{ card().eyebrow }}</span>
+        <h2>{{ card().title }}</h2>
+        <p>{{ card().body }}</p>
+      </div>
+      @if (transport.status() === 'connecting') {
+        <button class="cta" type="button" (click)="disconnect()"><app-controller-icon class="spin" name="spinner" />Cancelar</button>
+      } @else if (paired()) {
+        <button class="cta" type="button" (click)="connect()"><app-controller-icon name="connect" />{{ card().cta }}</button>
       } @else {
-        <p>No hay un PC emparejado</p>
-        <button class="secondary" type="button" (click)="settingsOpen.set(true)">Conexión manual</button>
+        <button class="cta" type="button" (click)="settingsOpen.set(true)">Conexión manual</button>
+      }
+      @if (paired() && transport.status() !== 'connecting') {
+        <div class="card-links"><button class="link" type="button" (click)="settingsOpen.set(true)">Conexión manual</button></div>
       }
     </section>
   }
 
   @if (settingsOpen()) {
-    <section id="advanced-connection" class="connection-panel" aria-label="Conexión avanzada">
-      <h2>Ajustes · Conexión avanzada</h2>
+    <div class="sheet-backdrop" (click)="settingsOpen.set(false)"></div>
+    <section id="settings-sheet" class="card sheet" role="dialog" aria-label="Ajustes">
+      <div class="sheet-head">
+        <h2>Ajustes</h2>
+        <button class="icon-button" type="button" aria-label="Cerrar ajustes" (click)="settingsOpen.set(false)"><app-controller-icon name="close" /></button>
+      </div>
+      <h3 class="eyebrow">CONEXIÓN</h3>
       @if (transport.status() === 'connected' || transport.status() === 'connecting') {
         <button class="secondary" type="button" (click)="disconnect()">{{ transport.status() === 'connected' ? 'Desconectar' : 'Cancelar' }}</button>
       } @else {
@@ -48,44 +97,19 @@
               (input)="updateManualAddress(pcAddress.value, pcAddress)" (paste)="pasteManualAddress($event, pcAddress)" />
             <button class="primary" type="submit">Conectar</button>
           </div>
-          @if (manualDetails(); as details) { <p>Host: {{ details.host }} · Puerto: {{ details.port }}</p> }
-          <p>Si pegas el endpoint completo del companion, la clave se guarda internamente y no se muestra.</p>
+          @if (manualDetails(); as details) { <p class="hint">Host: {{ details.host }} · Puerto: {{ details.port }}</p> }
+          <p class="hint">Si pegas el endpoint completo del companion, la clave se guarda internamente y no se muestra.</p>
           @if (manualError()) { <p class="error-message" role="alert">{{ manualError() }}</p> }
         </form>
       }
-    </section>
-  }
-
-  <section class="sticks" aria-label="Controles de vuelo">
-    <article class="stick-card">
-      <div class="stick-heading"><h1>Yaw <span>/ Throttle</span></h1><output class="power">{{ throttlePercent() }}<small>%</small></output></div>
-      <div class="power-track" role="meter" aria-label="Throttle" aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="throttlePercent()">
-        <span [style.width.%]="throttlePercent()"></span>
-      </div>
-      <app-virtual-stick label="Yaw y throttle" [xValue]="controller.leftStick().x" [yValue]="controller.leftStick().y"
-        [xReturnToCenter]="true" [yReturnToCenter]="false" [invertY]="true" (valueChange)="controller.setLeftStick($event)" />
-    </article>
-    <article class="stick-card">
-      <div class="stick-heading"><h2>Roll <span>/ Pitch</span></h2><span class="axis-hint" aria-hidden="true">↔ ↕</span></div>
-      <div class="power-track muted" aria-hidden="true"></div>
-      <app-virtual-stick label="Roll y pitch" [xValue]="controller.rightStick().x" [yValue]="controller.rightStick().y"
-        [xReturnToCenter]="true" [yReturnToCenter]="true" [invertY]="true" (valueChange)="controller.setRightStick($event)" />
-    </article>
-  </section>
-
-  <section class="virtual-buttons" aria-label="Botones del mando">
-    @for (button of buttonConfigs; track button.index) {
-      <app-virtual-button [label]="button.label" [mode]="button.mode" [pressed]="controller.buttons()[button.index]"
-        [disabled]="transport.status() !== 'connected'" (pressedChange)="controller.setButton(button.index, $event)" />
-    }
-  </section>
-  @if (debugOpen()) {
-    <section id="debug-panel" class="debug-panel" aria-label="Diagnóstico">
-      <div class="debug-heading"><span>Diagnóstico · PC · v{{ version }}</span><app-connection-status [status]="transport.status()" [lost]="transport.connectionLost()" /></div>
-      <app-controller-debug [state]="controller.state()" />
-      <div class="debug-heading"><span>{{ transport.packetsPerSecond() }} paquetes/s</span><span>SEQ {{ transport.lastSequence() ?? '—' }}</span></div>
-      <p>Modo: {{ pwa.displayMode() }} · Service worker: {{ pwa.workerActive() ? "Activo" : "Pendiente" }}</p>
-      <p>Throttle conserva su posición. Los demás ejes vuelven al centro.</p>
+      <h3 class="eyebrow">DIAGNÓSTICO</h3>
+      <dl class="diagnostics">
+        <div><dt>Paquetes/s</dt><dd>{{ transport.packetsPerSecond() }}</dd></div>
+        <div><dt>SEQ</dt><dd>{{ transport.lastSequence() ?? '—' }}</dd></div>
+        <div><dt>Modo</dt><dd>{{ pwa.displayMode() }}</dd></div>
+        <div><dt>Service worker</dt><dd>{{ pwa.workerActive() ? 'Activo' : 'Pendiente' }}</dd></div>
+      </dl>
+      <p class="version">v{{ version }}</p>
     </section>
   }
   @if (fullscreenMessage()) { <p class="notice" role="status">{{ fullscreenMessage() }}</p> }
