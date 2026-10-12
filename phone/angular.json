@@ -20,6 +20,11 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "*-OFL.txt",
+                "input": "../licenses",
+                "output": "fonts"
               }
             ]
           },

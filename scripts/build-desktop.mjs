@@ -50,6 +50,8 @@ await writeFile(join(output, 'USER_README.html'), '<!doctype html><html lang="es
   (pwaUrl ? 'PWA: <a href="' + escape(pwaUrl) + '">' + escape(pwaUrl) + '</a>' : 'Versión de prueba local; la URL pública de la PWA aún no está configurada.') + '</p><pre>' + escape(text) + '</pre></html>');
 await mkdir(join(output, 'licenses'), { recursive: true });
 await copyFile(join(root, 'phone/dist/phone/3rdpartylicenses.txt'), join(output, 'licenses/frontend.txt'));
+await cp(join(root, 'licenses'), join(output, 'licenses'), { recursive: true });
+await copyFile(join(root, 'THIRD_PARTY_NOTICES.md'), join(output, 'THIRD_PARTY_NOTICES.md'));
 for (const [source, target] of [['ws/LICENSE', 'ws.txt'], ['koffi/LICENSE.txt', 'koffi.txt']]) {
   try { await copyFile(join(root, 'node_modules', source), join(output, 'licenses', target)); }
   catch { if (source.startsWith('koffi')) await copyFile(join(root, 'node_modules/koffi/LICENSE'), join(output, 'licenses', target)); else throw new Error('Missing dependency license'); }

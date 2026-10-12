@@ -1,3 +1,45 @@
+/* Self-hosted variable fonts, latin subset (OFL-1.1, see licenses/). */
+@font-face { font-family: 'Urbanist'; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url('/fonts/urbanist-latin-wght-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Doto'; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url('/fonts/doto-latin-wght-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Martian Mono'; font-style: normal; font-weight: 100 800; font-display: swap;
+  src: url('/fonts/martian-mono-latin-wght-normal.woff2') format('woff2'); }
+
+/* Design tokens from docs/design/README.md. */
+:root {
+  --fpv-bg: #0D0D12;
+  --fpv-ink: #F2F2F6;
+  --fpv-on-solid: #121216;
+  --fpv-body: #C9C9D4;
+  --fpv-muted: #9C9CAD;
+  --fpv-card: rgba(30, 30, 40, 0.62);
+  --fpv-card-blur: 24px;
+  --fpv-pill-solid: rgba(20, 20, 28, 0.88);
+  --fpv-edge: rgba(255, 255, 255, 0.08);
+  --fpv-chip: rgba(255, 255, 255, 0.06);
+  --fpv-chip-edge: rgba(255, 255, 255, 0.1);
+  --fpv-accent: #8B7CFF;
+  --fpv-lava-pink: #FF8AD8;
+  --fpv-lava-violet: #8B7CFF;
+  --fpv-lava-blue: #6E9BFF;
+  --fpv-lava: linear-gradient(135deg, var(--fpv-lava-pink), var(--fpv-lava-violet), var(--fpv-lava-blue));
+  --fpv-ok: #4ADE80;
+  --fpv-warn: #F5C969;
+  --fpv-warn-bg: rgba(250, 190, 60, 0.1);
+  --fpv-warn-edge: rgba(250, 190, 60, 0.3);
+  --fpv-error: #F87171;
+  --fpv-error-text: #FCA5A5;
+  --fpv-error-bg: rgba(248, 113, 113, 0.1);
+  --fpv-font-ui: 'Urbanist', system-ui, sans-serif;
+  --fpv-font-display: 'Doto', ui-monospace, monospace;
+  --fpv-font-mono: 'Martian Mono', ui-monospace, monospace;
+  --fpv-radius-pill: 999px;
+  --fpv-radius-card: 24px;
+  --fpv-radius-chip: 16px;
+  --fpv-touch-min: 44px;
+}
+
 * { box-sizing: border-box; }
 html, body { margin: 0; min-height: 100%; background: #08121c; color: #edf6ff; font-family: system-ui, sans-serif; }
 body { overscroll-behavior: none; }

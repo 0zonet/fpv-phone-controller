@@ -21,5 +21,12 @@ assert.match(html, /name="theme-color"/); assert.match(html, /name="mobile-web-a
 const ngsw = JSON.parse(await readFile(new URL('ngsw.json', root), 'utf8'));
 assert.equal(ngsw.index, '/index.html'); assert.ok(ngsw.hashTable['/manifest.webmanifest']);
 assert.ok(ngsw.hashTable['/icons/icon-512x512.png']);
+const fonts = ngsw.assetGroups.find(group => group.name === 'fonts');
+assert.equal(fonts?.installMode, 'prefetch');
+for (const font of ['urbanist', 'doto', 'martian-mono']) {
+  const url = '/fonts/' + font + '-latin-wght-normal.woff2';
+  assert.ok(fonts.urls.includes(url) && ngsw.hashTable[url], 'Font not prefetched offline: ' + url);
+}
+for (const license of ['Urbanist', 'Doto', 'MartianMono']) await readFile(new URL('fonts/' + license + '-OFL.txt', root));
 assert.ok((await readFile(new URL('ngsw-worker.js', root))).length > 1000);
 console.log('PASS: production PWA manifest, scope, display, icons, meta tags and Angular service worker assets.');
