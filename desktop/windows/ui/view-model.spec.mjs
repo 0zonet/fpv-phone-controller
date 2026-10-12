@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { chips, deviceText, maskEndpoint, problemFor, screen, stickOffsets, waitingNote } from './view-model.js';
+import { chips, deviceText, firewallProblem, firewallSuspected, maskEndpoint, problemFor, screen, stickOffsets, waitingNote } from './view-model.js';
 
 const ready = { type: 'status', virtualController: 'READY', websocket: 'LISTENING', phone: 'DISCONNECTED', issueCode: '' };
 const values = status => chips(status).map(chip => chip.value).join('|');
@@ -36,6 +36,22 @@ test('pantalla: QR, conectado, Show QR, pairing descartado y backend caído', ()
   assert.deepEqual(screen({ ...ready, issueCode: 'PAIRING_REJECTED' }, { dismissedPairing: true }), { kind: 'qr', problem: null });
   assert.deepEqual(screen(null), { kind: 'starting', problem: null });
   assert.deepEqual(screen(null, { backendStopped: true }), { kind: 'problem', problem: 'startup' });
+});
+test('firewall: solo con regla de bloqueo o red Public y ningún intento tras 45 s', () => {
+  const waiting = { ...ready, issueCode: 'CONNECTION_HELP', phoneAttempted: false };
+  assert.equal(firewallSuspected(waiting, { blockRule: true }), true);
+  assert.equal(firewallSuspected(waiting, { publicNetwork: true }), true);
+  assert.equal(firewallSuspected(waiting, { blockRule: false, publicNetwork: false }), false, 'only absence of attempts: generic hint');
+  assert.equal(firewallSuspected({ ...waiting, phoneAttempted: true }, { blockRule: true }), false, 'an attempt arrived: not the firewall');
+  assert.equal(firewallSuspected({ ...ready, phoneAttempted: false }, { blockRule: true }), false, 'before 45 s');
+  assert.equal(firewallSuspected(waiting, { blockRule: true, error: 'COMException' }), false);
+  assert.equal(firewallSuspected(waiting, null), false);
+  assert.deepEqual(screen(waiting, { firewall: { blockRule: true } }), { kind: 'problem', problem: 'firewall' });
+  assert.deepEqual(screen(waiting, { firewall: { blockRule: true }, dismissedFirewall: true }), { kind: 'qr', problem: null });
+  assert.equal(firewallProblem({ blockRule: true }).primary[0], 'firewall-allow');
+  assert.equal(firewallProblem({ publicNetwork: true }).primary[0], 'network-settings');
+  assert.match(firewallProblem({ publicNetwork: true }).body, /Public/);
+  assert.match(firewallProblem({ blockRule: true }).body, /Chrome/);
 });
 test('endpoint enmascarado, dispositivo y mini sticks', () => {
   assert.equal(maskEndpoint('ws://192.168.1.2:8080/?token=' + 'a'.repeat(48)), 'ws://192.168.1.2:8080/?token=••••');

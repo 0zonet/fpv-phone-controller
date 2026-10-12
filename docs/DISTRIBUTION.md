@@ -82,7 +82,14 @@ Referencias:
 ## Red y firewall
 
 La distribución escucha únicamente en la IPv4 privada seleccionada, no en 0.0.0.0 ni IPv6. Filtra interfaces conocidas de VPN/VM; un nombre desconocido puede necesitar selección manual.
-No añade reglas de firewall silenciosamente. Si hace falta una regla, limitar programa runtime/companion-engine.exe, TCP 8080, Private y LocalSubnet. No abrir puertos del router.
+Política (D5): ni el instalador ni la app tocan el firewall por su cuenta. La app solo crea una regla **bajo demanda**, cuando el usuario pulsa "Allow on private networks" (pantalla de firewall o Advanced), con **un único UAC**:
+- Regla "FPV Phone Controller (private network)": entrada, permitir, programa {app}\runtime\companion-engine.exe, TCP, perfil **Private**, remoto **LocalSubnet**. No se fija el puerto, porque el usuario puede cambiarlo ("Use another port").
+- Desactiva (no borra) las reglas de bloqueo de entrada cuyo programa es exactamente ese companion-engine.exe; suelen quedar al cancelar el primer aviso de Windows. Las reglas de otras apps no se tocan.
+- La ejecuta FPVPhoneController.exe --firewall-allow elevado; la ruta del programa es siempre la de esa instalación, nunca un argumento.
+- Al desinstalar, [UninstallRun] borra la regla con netsh, elevado, solo si existe (si no existe, no hay UAC).
+- Nunca se abren puertos del router ni se desactiva el firewall.
+
+Heurística (nunca una certeza): la pantalla "Windows Firewall may be blocking it" aparece solo si, tras 45 s escuchando sin ningún intento de conexión (CONNECTION_HELP sin phoneAttempted), además existe una regla de bloqueo para companion-engine.exe o la red seleccionada es Public. Con solo la ausencia de intentos se mantiene el aviso genérico. Cualquier intento (aceptado o con QR antiguo) descarta el firewall. Ninguna señal distingue el firewall del permiso de red local de Chrome en el teléfono, así que el texto lo menciona. Si la red es Public, el botón principal es "Open network settings" (la regla es solo para Private).
 Rechaza clientes fuera de la subred, origen no autorizado o token incorrecto antes del upgrade WebSocket. Solo se admite un teléfono; se conserva validación estricta, límite de payload y failsafe.
 La clave cambia al reiniciar o cambiar interfaz. El QR y Copy link contienen el enlace de pairing completo. Advanced muestra la IP, el puerto y el endpoint para conexión manual. Consulta PAIRING.md para el protocolo y las pruebas.
 El transporte local ws no cifra el tráfico: solo redes de confianza. El CLI npm run desktop conserva el flujo de desarrollo original y no es el punto de entrada de distribución.
@@ -97,7 +104,7 @@ Usa otro Windows 11 x64 o una VM con snapshots (el driver puede necesitar entorn
 5. Publica la actualización de la PWA en Vercel e instala el nuevo companion. En Android escanea el QR y permite acceso LAN.
 6. Verifica Phone CONNECTED, los cuatro ejes en joy.cpl y luego Uncrashed.
 7. Cierra el companion y comprueba reset/liberación; reinícialo y escanea el nuevo QR.
-8. Prueba cambio de red, firewall bloqueado, origen ajeno, token antiguo, driver ocupado y puerto ocupado.
+8. Prueba cambio de red, firewall bloqueado (cancela el aviso de Windows la primera vez y espera 45 s: debe aparecer la pantalla de firewall; "Allow on private networks" pide un UAC y después el teléfono conecta), red en perfil Public, origen ajeno, token antiguo, driver ocupado y puerto ocupado. Desinstala y comprueba con wf.msc que la regla "FPV Phone Controller (private network)" ya no existe.
 9. Desinstala desde Windows y comprueba que desaparecen app y accesos directos. vJoy permanece instalado.
 
 test:package usa un driver fake de forma explícita para validar el artefacto sin adquirir el dispositivo real; no sustituye la prueba del instalador, Android o Uncrashed.

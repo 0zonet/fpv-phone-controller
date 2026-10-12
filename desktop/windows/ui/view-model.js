@@ -37,6 +37,26 @@ export const PROBLEMS = {
     primary: ['show-qr', 'Show QR'], secondary: ['new-qr', 'New QR'], foot: 'Only the latest QR works' }
 };
 
+/**
+ * Firewall heuristic (feasibility report §4): only with a block rule for the engine or a Public network,
+ * AND no connection attempt at all after 45 s (CONNECTION_HELP without phoneAttempted). Never a certainty.
+ */
+export function firewallSuspected(status, firewall) {
+  return !!status && !!firewall && !firewall.error && (firewall.blockRule || firewall.publicNetwork)
+    && status.issueCode === 'CONNECTION_HELP' && !status.phoneAttempted && status.phone !== 'CONNECTED' && status.websocket === 'LISTENING';
+}
+export function firewallProblem(firewall) {
+  const reasons = [];
+  if (firewall?.blockRule) reasons.push('Windows has a rule that blocks FPV Phone Controller, usually left by cancelling its first network prompt.');
+  if (firewall?.publicNetwork) reasons.push('This network is set to Public, where Windows blocks other devices. If it is your home network, set it to Private.');
+  reasons.push('It can also be Chrome on the phone: allow local-network access when asked.');
+  const publicOnly = firewall?.publicNetwork && !firewall?.blockRule;
+  return { tone: 'warn', icon: 'shield', eyebrow: 'PHONE CAN’T REACH THE PC', title: 'Windows Firewall may be blocking it', body: reasons.join(' '),
+    primary: publicOnly ? ['network-settings', 'Open network settings'] : ['firewall-allow', 'Allow on private networks'],
+    secondary: publicOnly ? ['firewall-allow', 'Allow on private networks'] : ['show-qr', 'Show QR'],
+    foot: 'Windows will ask for permission · private networks only' };
+}
+
 export function problemFor(issueCode) {
   if (REPAIR_CODES.includes(issueCode)) return 'vjoy';
   return ({ DEVICE_BUSY: 'device', PORT_BUSY: 'port', NETWORK_MISSING: 'network', NETWORK_PERMISSION: 'permission',
@@ -62,7 +82,6 @@ export function chips(status) {
   if (status.phone === 'CONNECTED') phone = CHIP.connected();
   else if (listening && code === 'PHONE_LOST') phone = CHIP.error('Lost');
   else if (listening && code === 'CONNECTION_HELP') phone = CHIP.warn('Not reaching');
-  else if (listening && code === 'FIREWALL_SUSPECTED') phone = CHIP.warn('Not reaching');
   else if (listening && code === 'PAIRING_REJECTED') phone = CHIP.warn('Old QR');
   return [controller, server, phone];
 }
@@ -75,6 +94,7 @@ export function screen(status, ui = {}) {
   if (!status) return { kind: ui.backendStopped ? 'problem' : 'starting', problem: ui.backendStopped ? 'startup' : null };
   const problem = problemFor(status.issueCode ?? '');
   if (problem && !(problem === 'pairing' && ui.dismissedPairing)) return { kind: 'problem', problem };
+  if (firewallSuspected(status, ui.firewall) && !ui.dismissedFirewall && !ui.showQr) return { kind: 'problem', problem: 'firewall' };
   if (status.websocket !== 'LISTENING') return { kind: ui.backendStopped ? 'problem' : 'starting', problem: ui.backendStopped ? 'startup' : null };
   if (status.phone === 'CONNECTED' && !ui.showQr) return { kind: 'connected', problem: null };
   return { kind: 'qr', problem: null };

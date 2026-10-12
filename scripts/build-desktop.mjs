@@ -53,7 +53,7 @@ execFileSync(csc, ['/nologo', '/target:winexe', '/platform:x64', '/optimize+',
   '/reference:System.Windows.Forms.dll', '/reference:System.Drawing.dll', '/reference:System.Web.Extensions.dll',
   '/reference:' + webView2['Microsoft.Web.WebView2.Core.dll'], '/reference:' + webView2['Microsoft.Web.WebView2.WinForms.dll'],
   '/win32icon:' + join(root, 'desktop/windows/app.ico'), '/out:' + join(output, 'FPVPhoneController.exe'),
-  join(root, 'desktop/windows/CompanionWindow.cs'), join(root, 'desktop/windows/DesktopConfiguration.cs'), assembly], { stdio: 'inherit' });
+  join(root, 'desktop/windows/CompanionWindow.cs'), join(root, 'desktop/windows/Firewall.cs'), join(root, 'desktop/windows/DesktopConfiguration.cs'), assembly], { stdio: 'inherit' });
 await copyFile(join(root, 'USER_README.md'), join(output, 'USER_README.md'));
 const escape = text => text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 const text = await readFile(join(root, 'USER_README.md'), 'utf8');

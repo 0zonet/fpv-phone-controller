@@ -34,6 +34,10 @@ Name: "{group}\Help"; Filename: "{app}\USER_README.html"
 Name: "{group}\Uninstall"; Filename: "{uninstallexe}"
 [Run]
 Filename: "{app}\FPVPhoneController.exe"; Description: "Open FPV Phone Controller"; Flags: nowait postinstall skipifsilent
+[UninstallRun]
+; The app creates this firewall rule only when the user clicks "Allow on private networks" (one UAC).
+; Removing it needs admin too, so it runs elevated and only if the rule exists.
+Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall delete rule name=""FPV Phone Controller (private network)"""; Flags: runhidden shellexec waituntilterminated; Verb: runas; Check: FirewallRuleExists; RunOnceId: "RemoveFirewallRule"
 [Code]
 // vJoy is bundled ({app}\vjoy) and configured by vjoy-setup.cjs (desktop/src/drivers/vjoy/vjoy-setup.ts).
 // 1. Probe without admin: a compatible vJoy with a fitting device is just recorded, no UAC.
@@ -70,6 +74,15 @@ begin
     Log('vJoy setup exit code: ' + IntToStr(ResultCode))
   else
     Log('vJoy setup not run (UAC cancelled or failed): ' + SysErrorMessage(ResultCode));
+end;
+
+function FirewallRuleExists: Boolean;
+var
+  ResultCode: Integer;
+begin
+  // netsh exits with 0 when a rule with this name exists; reading needs no admin.
+  Result := Exec(ExpandConstant('{sys}\netsh.exe'), 'advfirewall firewall show rule name="FPV Phone Controller (private network)"',
+    '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0);
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);

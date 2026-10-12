@@ -19,7 +19,7 @@ using Microsoft.Web.WebView2.WinForms;
 class CompanionWindow : Form {
     WebView2 view = new WebView2();
     Process backend;
-    bool closing = false, pageReady = false, selfTest = false, repairing = false;
+    bool closing = false, pageReady = false, selfTest = false, repairing = false, firewallChecked = false, firewallBusy = false;
     string selectedAddress = "", pairingUrl = "", lastStatus = null, lastFatal = null, repairNote = "";
     int currentPort = 8080;
     List<Dictionary<string, object>> addresses = new List<Dictionary<string, object>>();
@@ -29,6 +29,7 @@ class CompanionWindow : Form {
     static readonly string LogsFolder = Path.Combine(DataFolder, "logs");
     static readonly string PortFile = Path.Combine(DataFolder, "port.txt");
     static readonly string AppFolder = AppDomain.CurrentDomain.BaseDirectory;
+    static readonly string EnginePath = Path.GetFullPath(Path.Combine(AppFolder, "runtime", "companion-engine.exe"));
     static readonly string BetaVersion = ((System.Reflection.AssemblyInformationalVersionAttribute)Attribute.GetCustomAttribute(typeof(CompanionWindow).Assembly, typeof(System.Reflection.AssemblyInformationalVersionAttribute))).InformationalVersion;
     static readonly JavaScriptSerializer Json = new JavaScriptSerializer();
     const string NetworkSettingsTarget = "ms-settings:network";
@@ -42,6 +43,10 @@ class CompanionWindow : Form {
         try { SetProcessDpiAwarenessContext(new IntPtr(-2)); } catch (EntryPointNotFoundException) {}
         Application.EnableVisualStyles(); Application.SetCompatibleTextRenderingDefault(false);
         if (args.Length > 0 && args[0] == "--self-test") return SelfTest(args.Length > 1 ? args[1] : null);
+        // Elevated by the window (one UAC). The program path is always this installation's engine, never an argument.
+        if (args.Length > 0 && args[0] == "--firewall-allow") {
+            try { return Firewall.AllowOnPrivateNetworks(EnginePath); } catch (Exception e) { TechnicalLog("firewall_allow_error", e.ToString()); return 1; }
+        }
         bool created;
         using (var mutex = new Mutex(true, "Local\\FPVPhoneController", out created)) {
             if (!created) { MessageBox.Show("FPV Phone Controller is already running."); return 0; }
@@ -134,6 +139,8 @@ class CompanionWindow : Form {
             case "repair": RepairDriver(); break;
             case "use-port": UseAnotherPort(); break;
             case "network-settings": Open(NetworkSettingsTarget); break;
+            case "firewall-allow": AllowFirewall(); break;
+            case "firewall-settings": Start("control.exe", "firewall.cpl"); break;
             case "disconnect-phone": SendCommand("disconnect-phone"); break;
             case "select-network":
                 if (message.TryGetValue("address", out value) && value is string && (string)value != selectedAddress) { selectedAddress = (string)value; Restart(); }
@@ -176,6 +183,9 @@ class CompanionWindow : Form {
             if (message.TryGetValue("addresses", out value) && value is System.Collections.IEnumerable)
                 foreach (object entry in (System.Collections.IEnumerable)value) { var item = entry as Dictionary<string, object>; if (item != null) addresses.Add(item); }
             if (message.TryGetValue("virtualController", out value) && (string)value == "READY") repairNote = "";
+            object attempted, issue;
+            bool noAttempt = !(message.TryGetValue("phoneAttempted", out attempted) && Convert.ToBoolean(attempted));
+            if (noAttempt && message.TryGetValue("issueCode", out issue) && (string)issue == "CONNECTION_HELP" && !firewallChecked) CheckFirewall();
         } else if ((string)type == "fatal") lastFatal = line;
         Post(line);
     }
@@ -238,6 +248,44 @@ class CompanionWindow : Form {
         PostHost(new Dictionary<string, object> { { "repairing", false }, { "repairNote", repairNote } });
     }
 
+    // Firewall heuristic input: read on a worker thread (COM enumeration can take a moment), then sent to the page.
+    void CheckFirewall() {
+        firewallChecked = true;
+        string address = selectedAddress;
+        var worker = new Thread(delegate () {
+            var status = Firewall.Check(EnginePath, address);
+            TechnicalLog("firewall_check", "block=" + status.BlockRule + " public=" + status.PublicNetwork + " allow=" + status.AllowRule + (status.Error != null ? " error=" + status.Error : ""));
+            Dispatch(delegate { PostHost(new Dictionary<string, object> { { "firewall", FirewallValue(status) } }); });
+        });
+        worker.IsBackground = true; worker.Start();
+    }
+    static Dictionary<string, object> FirewallValue(Firewall.Status status) {
+        return new Dictionary<string, object> { { "blockRule", status.BlockRule }, { "publicNetwork", status.PublicNetwork }, { "allowRule", status.AllowRule }, { "error", status.Error } };
+    }
+    ProcessStartInfo FirewallStartInfo() {
+        return new ProcessStartInfo(Application.ExecutablePath, "--firewall-allow") { UseShellExecute = true, Verb = "runas", WindowStyle = ProcessWindowStyle.Hidden, WorkingDirectory = AppFolder };
+    }
+    // D5: on demand only, one UAC, scoped rule (this program, TCP, Private profile, local subnet).
+    void AllowFirewall() {
+        if (firewallBusy) return;
+        firewallBusy = true; PostHost(new Dictionary<string, object> { { "firewallBusy", true } });
+        var info = FirewallStartInfo(); string address = selectedAddress;
+        var worker = new Thread(delegate () {
+            int code = -1; bool cancelled = false;
+            try { using (var process = Process.Start(info)) { process.WaitForExit(); code = process.ExitCode; } }
+            catch (System.ComponentModel.Win32Exception e) { cancelled = e.NativeErrorCode == 1223; TechnicalLog("firewall_start_error", e.ToString()); }
+            catch (Exception e) { TechnicalLog("firewall_start_error", e.ToString()); }
+            var status = Firewall.Check(EnginePath, address);
+            TechnicalLog("firewall_allow_finished", "exit=" + code + " cancelled=" + cancelled + " allow=" + status.AllowRule + " block=" + status.BlockRule);
+            Dispatch(delegate {
+                firewallBusy = false;
+                PostHost(new Dictionary<string, object> { { "firewallBusy", false }, { "firewall", FirewallValue(status) },
+                    { "toast", cancelled ? "Firewall change cancelled" : code == 0 ? "Allowed on private networks. Scan the QR again." : "Could not change the firewall. Open the logs folder." } });
+            });
+        });
+        worker.IsBackground = true; worker.Start();
+    }
+
     // The chosen port persists; otherwise the next start would go back to 8080 and fail again.
     static int SavedPort() {
         try { int value; if (File.Exists(PortFile) && Int32.TryParse(File.ReadAllText(PortFile).Trim(), out value) && value >= 1024 && value <= 65535) return value; }
@@ -275,7 +323,7 @@ class CompanionWindow : Form {
     }
 
     void Restart() {
-        StopBackend(); lastStatus = null; lastFatal = null; pairingUrl = "";
+        StopBackend(); lastStatus = null; lastFatal = null; pairingUrl = ""; firewallChecked = false;
         PostHost(new Dictionary<string, object> { { "reset", true }, { "backendStopped", false } });
         if (!repairing && !selfTest) StartBackend();
     }
@@ -377,6 +425,15 @@ class CompanionWindow : Form {
         view = await Render("{\"type\":\"metrics\",\"packetsPerSecond\":60,\"axes\":{\"throttle\":0.5,\"yaw\":0,\"pitch\":0,\"roll\":0},\"failsafe\":false}");
         check((string)view["screen"] == "connected" && Chips(view) == "Ready|Ready|Connected" && Strings(view["buttons"]).Contains("disconnect-phone"), "connected screen with Disconnect phone");
         check(Convert.ToBoolean(view["fonts"]), "bundled fonts load");
+        var firewall = Firewall.Check(EnginePath, "");
+        check(firewall.Error == null, "firewall rules can be read without admin (" + firewall.Error + ")");
+        var allow = FirewallStartInfo();
+        check(allow.Verb == "runas" && allow.Arguments == "--firewall-allow" && allow.FileName == Application.ExecutablePath, "Allow on private networks runs this exe elevated");
+        var waiting = new Dictionary<string, object>(ready); waiting["issueCode"] = "CONNECTION_HELP"; waiting["phoneAttempted"] = false;
+        await Render(Json.Serialize(waiting));
+        Post("{\"type\":\"host\",\"firewall\":{\"blockRule\":true,\"publicNetwork\":false,\"allowRule\":false}}");
+        view = await Render(null);
+        check((string)view["screen"] == "problem-firewall" && ((string)view["primary"]).StartsWith("Allow on private networks"), "block rule + no attempts -> firewall screen");
         if (fixture != null) {
             view = await Render(File.ReadAllText(fixture));
             check((string)view["screen"] == "qr" && Convert.ToBoolean(view["qr"]), "real status renders the QR image");

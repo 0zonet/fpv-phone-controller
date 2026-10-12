@@ -12,7 +12,7 @@ const fixtures = {
   port: { websocket: 'STOPPED', issueCode: 'PORT_BUSY' }, network: { websocket: 'STOPPED', issueCode: 'NETWORK_MISSING', addresses: [], selectedAddress: '' },
   pairing: { issueCode: 'PAIRING_REJECTED', phoneAttempted: true }, startup: { websocket: 'STOPPED', virtualController: 'NOT AVAILABLE', issueCode: 'STARTUP_FAILED' },
   busy: { websocket: 'STOPPED', virtualController: 'NOT AVAILABLE', issueCode: 'DEVICE_BUSY' },
-  firewall: { issueCode: 'FIREWALL_SUSPECTED', firewall: { blockRule: true, publicProfile: false } },
+  firewall: { issueCode: 'CONNECTION_HELP', phoneAttempted: false },
   advanced: { phone: 'CONNECTED', device: { id: 3, axes: 4, buttons: 4 } }
 };
 export async function runDemo(receive, state) {
@@ -20,6 +20,7 @@ export async function runDemo(receive, state) {
   const qr = await fetch('demo-qr.txt').then(response => response.ok ? response.text() : '').catch(() => '');
   if (name === 'advanced') state.advanced = true;
   receive({ type: 'host', version: '0.4.0-beta.2' });
+  if (name === 'firewall') receive({ type: 'host', firewall: { blockRule: true, publicNetwork: false, allowRule: false } });
   receive({ ...base, qrPngBase64: qr.trim(), ...(fixtures[name] ?? {}) });
   if (name === 'advanced') receive({ type: 'metrics', packetsPerSecond: 60, axes: { throttle: .6, yaw: .2, pitch: -.3, roll: .4 }, failsafe: false });
   if (name === 'connected') {

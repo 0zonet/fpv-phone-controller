@@ -25,7 +25,9 @@ Record product version, Windows edition/build, phone model, Android version, Chr
 - [ ] Test an invalid QR link: a friendly error offers Manual connection; no invalid endpoint is opened.
 - [ ] Close another feeder if the virtual joystick is occupied; verify the actionable message and recovery with Retry.
 - [ ] Disconnect network/retry: verify no-network message. Restore it and Retry.
-- [ ] If firewall blocks access, verify troubleshooting guidance without claiming firewall detection or silently changing rules.
+- [ ] Firewall: on first launch click Cancel in the Windows Security prompt. After 45 s without the phone reaching the PC the window shows "Windows Firewall may be blocking it". Allow on private networks shows one UAC; afterwards the phone connects. No rule is ever created without clicking it.
+- [ ] With the network set to Public, the firewall screen offers Open network settings first.
+- [ ] After uninstalling, wf.msc no longer lists "FPV Phone Controller (private network)" (a UAC appears only if the rule existed).
 - [ ] Advanced > Open logs folder: verify startup/version/network/driver/server/phone/failsafe/error events; no continuous stick samples or pairing tokens.
 - [ ] Close normally; verify joystick reset/release. Reopen and connect by scanning the new QR.
 - [ ] Uninstall from Windows Settings > Apps. Verify app/shortcuts are removed. vJoy stays installed (other apps may use it) and local logs/preferences remain.

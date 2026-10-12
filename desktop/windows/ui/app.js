@@ -1,4 +1,4 @@
-import { chips, deviceText, maskEndpoint, PROBLEMS, screen, stickOffsets, waitingNote } from './view-model.js';
+import { chips, deviceText, firewallProblem, maskEndpoint, PROBLEMS, screen, stickOffsets, waitingNote } from './view-model.js';
 
 // Host bridge: CompanionWindow.cs forwards every backend stdout line (status, metrics, fatal) and its own
 // {type:'host'} state; the page sends {cmd, ...} back. Outside WebView2 (?demo=...) it renders fixtures.
@@ -6,7 +6,7 @@ const host = window.chrome?.webview ?? null;
 const send = (cmd, extra = {}) => host?.postMessage({ cmd, ...extra });
 
 const state = { status: null, metrics: null, version: '', repairing: false, repairNote: '', backendStopped: false,
-  showQr: false, dismissedPairing: false, advanced: false, lastIssue: '' };
+  showQr: false, dismissedPairing: false, dismissedFirewall: false, firewall: null, firewallBusy: false, advanced: false, lastIssue: '' };
 
 const $ = id => document.getElementById(id);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -59,15 +59,15 @@ function renderConnected() {
 }
 
 function renderProblem(key) {
-  const problem = PROBLEMS[key];
-  const repairing = key === 'vjoy' && state.repairing;
+  const problem = key === 'firewall' ? firewallProblem(state.firewall) : PROBLEMS[key];
+  const repairing = (key === 'vjoy' && state.repairing) || (key === 'firewall' && state.firewallBusy);
   const note = key === 'vjoy' && state.repairNote ? '<p class="note error">' + esc(state.repairNote) + '</p>' : '';
   const button = ([cmd, label], cls, extra = '') => '<button class="' + cls + '" type="button" ' + (cmd === 'show-qr' ? 'data-ui' : 'data-cmd') + '="' + cmd + '"' + extra + '>' + label + '</button>';
   return '<div class="icon-box ' + problem.tone + '">' + icons[problem.icon] + '</div>' +
     '<div class="problem-text"><span class="eyebrow ' + problem.tone + '-tone">' + problem.eyebrow + '</span>' +
     '<h1 class="title">' + problem.title + '</h1><p class="text">' + problem.body + '</p></div>' + note +
     '<div class="actions">' +
-    button(repairing ? [problem.primary[0], 'Repairing…'] : problem.primary, 'cta', (repairing ? ' disabled' : '') + ' id="primary"') .replace('</button>', (repairing ? '' : icons.arrow) + '</button>') +
+    button(repairing ? [problem.primary[0], key === 'firewall' ? 'Waiting for Windows…' : 'Repairing…'] : problem.primary, 'cta', (repairing ? ' disabled' : '') + ' id="primary"') .replace('</button>', (repairing ? '' : icons.arrow) + '</button>') +
     button(problem.secondary, 'secondary', repairing ? ' disabled' : '') +
     '<span class="foot">' + problem.foot + '</span></div>';
 }
@@ -138,6 +138,9 @@ function renderAdvanced() {
     '<button class="pill small" type="button" data-cmd="open-pwa">Open PWA</button>' +
     '<button class="pill small" type="button" data-cmd="local-preview">Local preview</button>' +
     '<button class="pill small" type="button" data-cmd="licenses">Third-party licenses</button></div>' +
+    '<span class="section">FIREWALL</span><div class="wrap"><button class="pill small" type="button" data-cmd="firewall-allow"' + (state.firewallBusy ? ' disabled' : '') + '>Allow on private networks</button>' +
+    '<button class="pill small" type="button" data-cmd="firewall-settings">Firewall settings</button></div>' +
+    '<p class="fine">Only if your phone cannot reach this PC. Windows asks for permission; the rule covers this app, private networks and your local subnet only, and is removed when you uninstall.</p>' +
     '<span class="section">HOW IT WORKS</span><ol class="steps"><li>Connect your PC and phone to the same network (or USB tethering).</li>' +
     '<li>Scan the QR with your phone’s camera.</li><li>Open your FPV simulator.</li><li>Select the vJoy controller in its settings.</li></ol>' +
     '<p class="fine">New QR restarts the connection and creates a new access key; the previous QR stops working. The endpoint is for manual connection in the phone’s Settings → Connection.</p>' +
@@ -183,7 +186,9 @@ function receive(message) {
     if ('repairing' in message) state.repairing = message.repairing;
     if ('repairNote' in message) state.repairNote = message.repairNote;
     if ('backendStopped' in message) state.backendStopped = message.backendStopped;
-    if (message.reset) { state.status = null; state.metrics = null; }
+    if ('firewall' in message) state.firewall = message.firewall;
+    if ('firewallBusy' in message) state.firewallBusy = message.firewallBusy;
+    if (message.reset) { state.status = null; state.metrics = null; state.firewall = null; state.dismissedFirewall = false; }
     if (message.toast) toast(message.toast);
   } else if (message.type === 'selftest') { void selfTestSummary().then(result => send('selftest-result', { result })); return; }
   render();
@@ -206,7 +211,7 @@ document.addEventListener('click', event => {
   const target = event.target.closest('[data-cmd],[data-ui]');
   if (!target || target.disabled) return;
   const ui = target.dataset.ui;
-  if (ui === 'show-qr') { state.showQr = true; state.dismissedPairing = true; state.advanced = false; render(); return; }
+  if (ui === 'show-qr') { state.showQr = state.status?.phone === 'CONNECTED'; state.dismissedPairing = true; state.dismissedFirewall = true; state.advanced = false; render(); return; }
   if (ui === 'hide-qr') { state.showQr = false; render(); return; }
   if (ui === 'close-advanced') { state.advanced = false; render(); return; }
   send(target.dataset.cmd);

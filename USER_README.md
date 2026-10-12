@@ -33,7 +33,7 @@ To check Windows first: Advanced > Test joystick opens joy.cpl. X/Y must follow 
 - Joystick occupied: close other feeders and click Check again.
 - Port occupied: click Use another port. The app picks a free port, remembers it and shows a new QR. Or close the other app using the port and Retry.
 - No network: connect Wi-Fi/Ethernet or USB tethering (Open network settings opens Windows network settings); choose the shared network in Advanced.
-- Unable to connect: check both devices share the network, allow local-network access in Chrome and tap Retry. Review Windows private-network firewall permissions. Never disable the firewall or open router ports.
+- Unable to connect: check both devices share the network, allow local-network access in Chrome and tap Retry. If the window says "Windows Firewall may be blocking it", click Allow on private networks and accept the Windows prompt (it allows only this app, on private networks and your local subnet; uninstalling removes it). If your home network is set to Public, set it to Private in Open network settings. Never disable the firewall or open router ports.
 - Old QR: if a phone uses a QR from a previous session, the window says so. Scan the current QR again.
 - Connection lost: restore the network, lower throttle on the phone and Retry. After restarting Windows companion, scan its new QR.
 - Persistent error: Logs (bottom of the window) opens the logs folder. Send the logs and your app version to the person who provided the beta. Logs contain local IPs and technical details; they omit continuous stick values and pairing keys.
