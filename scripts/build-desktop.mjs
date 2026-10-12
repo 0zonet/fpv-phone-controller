@@ -1,9 +1,10 @@
 import { build } from 'esbuild';
 import { cp, mkdir, readFile, writeFile, copyFile, access, rm } from 'node:fs/promises';
-import { resolve, dirname, join } from 'node:path';
+import { resolve, dirname, join, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
+import { vJoyInstaller } from './windows-tools.mjs';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 if (process.platform !== 'win32' || process.arch !== 'x64') throw new Error('Windows x64 is required for this native build.');
 if (Number(process.versions.node.split('.')[0]) !== 24) throw new Error('Build the distribution with Node 24 x64.');
@@ -15,9 +16,13 @@ const output = join(root, 'dist/windows');
 if (resolve(output) !== resolve(root, 'dist/windows')) throw new Error('Invalid build directory');
 await rm(output, { recursive: true, force: true });
 await mkdir(join(output, 'runtime'), { recursive: true });
-await build({ absWorkingDir: root, entryPoints: ['desktop/src/distribution/windows-entry.ts'],
-  outfile: join(output, 'companion.cjs'), bundle: true, platform: 'node', format: 'cjs', target: 'node24',
-  external: ['koffi', 'bufferutil', 'utf-8-validate'], sourcemap: false });
+for (const [entry, file] of [['windows-entry.ts', 'companion.cjs'], ['vjoy-setup-entry.ts', 'vjoy-setup.cjs']])
+  await build({ absWorkingDir: root, entryPoints: ['desktop/src/distribution/' + entry],
+    outfile: join(output, file), bundle: true, platform: 'node', format: 'cjs', target: 'node24',
+    external: ['koffi', 'bufferutil', 'utf-8-validate'], sourcemap: false });
+const vJoySetup = await vJoyInstaller(root);
+await mkdir(join(output, 'vjoy'), { recursive: true });
+await copyFile(vJoySetup, join(output, 'vjoy', basename(vJoySetup)));
 await copyFile(process.execPath, join(output, 'runtime/companion-engine.exe'));
 const dependencies = ['koffi/package.json', 'koffi/index.cjs', 'koffi/src/koffi/index.cjs',
   'koffi/src/koffi/src/static.cjs', 'koffi/src/koffi/src/trampolines.cjs'];

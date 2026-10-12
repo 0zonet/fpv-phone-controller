@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { requireVJoyButtons, writeVJoyButtons } from './vjoy-buttons.js';
+import { usableVJoyButtons, writeVJoyButtons } from './vjoy-buttons.js';
 test('maps every generic index 0..7 to native buttons 1..8 on the same device', () => {
   for (let active = 0; active < 8; active++) {
     const writes: { pressed: boolean; deviceId: number; button: number }[] = [];
@@ -17,7 +17,14 @@ test('short arrays release unspecified buttons and failed writes still attempt a
   assert.throws(() => writeVJoyButtons([], 1, (_, __, button) => { attempted.push(button); return button !== 2; }), /update failed: 2/);
   assert.deepEqual(attempted, [1, 2, 3, 4, 5, 6, 7, 8]);
 });
-test('requires eight configured buttons with actionable error before acquisition', () => {
-  for (const count of [0, 4, 7, NaN]) assert.throws(() => requireVJoyButtons(count), /Enable at least 8 buttons/);
-  requireVJoyButtons(8); requireVJoyButtons(128);
+test('devices with fewer than eight buttons only receive the buttons they have', () => {
+  const written: number[] = [];
+  writeVJoyButtons(Array(8).fill(true), 1, (_, __, button) => { written.push(button); return button <= 4; }, 4);
+  assert.deepEqual(written, [1, 2, 3, 4]);
+  const none: number[] = [];
+  writeVJoyButtons([true], 1, (_, __, button) => { none.push(button); return false; }, 0);
+  assert.deepEqual(none, []);
+});
+test('usable buttons are min(n, 8) and never negative', () => {
+  assert.deepEqual([0, 4, 7, 8, 128, -1, NaN, 2.5].map(usableVJoyButtons), [0, 4, 7, 8, 8, 0, 0, 0]);
 });

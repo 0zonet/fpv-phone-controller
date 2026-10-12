@@ -11,11 +11,11 @@ using System.Windows.Forms;
 class CompanionWindow : Form {
     Label driver = new Label(), websocket = new Label(), phone = new Label(), message = new Label(), port = new Label();
     ComboBox addresses = new ComboBox();
-    Button copy = new Button(), retry = new Button(), regenerate = new Button(), install = new Button();
-    Button checkAgain = new Button(), copyDownload = new Button();
+    Button copy = new Button(), retry = new Button(), regenerate = new Button(), repair = new Button();
+    Button checkAgain = new Button();
     bool driverRequired = false;
-    Action<ProcessStartInfo> launchBrowser = info => { Process.Start(info); };
-    Label network = new Label(), checks = new Label();
+    string repairNote = null;
+    Label network = new Label(), checks = new Label(), deviceInfo = new Label();
     Process backend;
     string pwaUrl = "", localWebUrl = "", pairingUrl = "", lastQr = "";
     PictureBox qr = new PictureBox();
@@ -38,19 +38,25 @@ class CompanionWindow : Form {
             missingStatus["virtualController"] = "NOT AVAILABLE"; missingStatus["websocket"] = "STOPPED";
             missingStatus["issueCode"] = "DRIVER_MISSING";
             window.ApplyStatus(Json.Serialize(missingStatus));
-            passed = passed && window.driverRequired && window.driver.Text == "Virtual Controller\n○ Driver required"
-                && window.message.Text == "FPV Phone Controller requires vJoy to create the virtual joystick."
-                && window.install.Text == "Install vJoy" && window.checkAgain.Text == "Check again";
-            ProcessStartInfo opened = null;
-            window.launchBrowser = info => { opened = info; };
-            window.OpenVJoyDownload();
-            passed = passed && opened != null && opened.FileName == DesktopConfiguration.VJOY_DOWNLOAD_URL
-                && opened.UseShellExecute && !window.IsDisposed && window.driverRequired;
-            window.launchBrowser = info => { throw new InvalidOperationException("Simulated browser failure"); };
-            window.OpenVJoyDownload();
-            passed = passed && window.message.Text == "Unable to open the vJoy download page." && window.copyDownload.Enabled;
+            passed = passed && window.driverRequired && window.driver.Text == "Virtual Controller\n○ Needs repair"
+                && window.message.Text == "The virtual controller needs repair."
+                && window.repair.Text == "Repair driver" && window.checkAgain.Text == "Check again";
+            var elevated = window.RepairStartInfo();
+            passed = passed && elevated.Verb == "runas" && elevated.UseShellExecute && elevated.FileName.EndsWith("companion-engine.exe")
+                && elevated.Arguments.Contains("vjoy-setup.cjs\" --repair --install always --state-dir \"");
+            window.FinishRepair(-1, true);
+            window.ApplyStatus(Json.Serialize(missingStatus));
+            passed = passed && window.message.Text == "Repair was cancelled. Click Repair driver to try again." && window.repair.Enabled;
+            missingStatus["issueCode"] = "DEVICE_UNAVAILABLE";
+            window.ApplyStatus(Json.Serialize(missingStatus));
+            passed = passed && window.driverRequired;
+            var limited = new Dictionary<string, object>(readyStatus);
+            limited["device"] = new Dictionary<string, object> { { "id", 3 }, { "axes", 4 }, { "buttons", 4 } };
+            window.ApplyStatus(Json.Serialize(limited));
+            passed = passed && !window.driverRequired && window.driver.Text == "Virtual Controller\n● Ready"
+                && window.deviceInfo.Text == "vJoy device 3 · 4 axes · 4 buttons\nThis vJoy device has 4 buttons; buttons above 4 are ignored.";
             window.ApplyStatus(Json.Serialize(readyStatus));
-            passed = passed && !window.driverRequired && window.driver.Text == "Virtual Controller\n● Ready" && !window.copyDownload.Enabled;
+            passed = passed && window.deviceInfo.Text == "" && window.message.Text == "";
             if (args.Length > 1) {
                 window.ApplyStatus(File.ReadAllText(args[1]));
                 passed = passed && window.qr.Image != null && window.qr.Image.Width == 320 && window.regenerate.Enabled && !String.IsNullOrEmpty(window.pairingUrl);
@@ -93,17 +99,10 @@ class CompanionWindow : Form {
         caption.Text = "Scan this QR with your phone"; caption.AutoSize = true; caption.Margin = new Padding(85, 0, 0, 8);
         layout.Controls.Add(caption);
         message.AutoSize = true; message.MaximumSize = new Size(480, 0); message.ForeColor = Color.FromArgb(150, 50, 30); layout.Controls.Add(message);
-        install.Text = "Install vJoy"; install.AutoSize = true; install.Visible = false;
-        install.BackColor = Color.FromArgb(30, 140, 105); install.ForeColor = Color.White; install.FlatStyle = FlatStyle.Flat;
-        install.Click += delegate { OpenVJoyDownload(); };
-        layout.Controls.Add(install);
-        copyDownload.Text = "Copy download link"; copyDownload.AutoSize = true;
-        copyDownload.Visible = false; copyDownload.Enabled = false;
-        copyDownload.Click += delegate {
-            try { Clipboard.SetText(DesktopConfiguration.VJOY_DOWNLOAD_URL); copyDownload.Text = "Copied"; }
-            catch (Exception e) { TechnicalLog("copy_download_error", e.ToString()); message.Text = "Unable to copy the download link. Visit " + DesktopConfiguration.VJOY_DOWNLOAD_URL; }
-        };
-        layout.Controls.Add(copyDownload);
+        repair.Text = "Repair driver"; repair.AutoSize = true; repair.Visible = false;
+        repair.BackColor = Color.FromArgb(30, 140, 105); repair.ForeColor = Color.White; repair.FlatStyle = FlatStyle.Flat;
+        repair.Click += delegate { RepairDriver(); };
+        layout.Controls.Add(repair);
         checkAgain.Text = "Check again"; checkAgain.AutoSize = true; checkAgain.Visible = false;
         checkAgain.Click += delegate { Restart(); };
         layout.Controls.Add(checkAgain);
@@ -113,6 +112,7 @@ class CompanionWindow : Form {
         layout.Controls.Add(details);
         advanced.Click += delegate { details.Visible = !details.Visible; advanced.Text = details.Visible ? "Advanced v" : "Advanced >"; };
         port.AutoSize = true; checks.AutoSize = true; details.Controls.Add(port); details.Controls.Add(checks);
+        deviceInfo.AutoSize = true; deviceInfo.MaximumSize = new Size(470, 0); details.Controls.Add(deviceInfo);
         details.Controls.Add(new Label { Text = "PC network", AutoSize = true });
         addresses.Width = 470; addresses.DropDownStyle = ComboBoxStyle.DropDownList;
         addresses.SelectedIndexChanged += delegate {
@@ -136,7 +136,6 @@ class CompanionWindow : Form {
             else Open(pwaUrl);
         });
         AddButton(links, "Local preview", delegate { if (!String.IsNullOrEmpty(localWebUrl)) Open(localWebUrl); });
-        AddButton(links, "Install vJoy", delegate { OpenVJoyDownload(); });
         AddButton(links, "Test joystick", delegate { Process.Start("control.exe", "joy.cpl"); });
         details.Controls.Add(links);
         details.Controls.Add(new Label { AutoSize = true, MaximumSize = new Size(470, 0),
@@ -150,6 +149,11 @@ class CompanionWindow : Form {
         });
         AddButton(help, "Show instructions", delegate { onboarding.Visible = true; });
         details.Controls.Add(help);
+        details.Controls.Add(new Label { AutoSize = true, MaximumSize = new Size(470, 0), ForeColor = Color.FromArgb(70, 85, 100),
+            Text = "Virtual controller driver: vJoy " + DesktopConfiguration.VJOY_VERSION + " by Shaul Eizikovich and contributors, MIT License. Source: " + DesktopConfiguration.VJOY_PROJECT_URL + ". Uninstalling FPV Phone Controller keeps vJoy, because other apps may use it." });
+        var about = new FlowLayoutPanel { AutoSize = true };
+        AddButton(about, "Third-party licenses", delegate { Open(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "licenses")); });
+        details.Controls.Add(about);
         Shown += delegate { StartBackend(); };
         FormClosing += delegate { closing = true; StopBackend(); };
     }
@@ -157,14 +161,37 @@ class CompanionWindow : Form {
         var button = new Button { Text = title, AutoSize = true }; button.Click += delegate { action(); }; panel.Controls.Add(button);
     }
     void Open(string target) { try { Process.Start(new ProcessStartInfo(target) { UseShellExecute = true }); } catch (Exception e) { TechnicalLog("open_error", e.ToString()); MessageBox.Show("Cannot open this item. Check the installation or open the logs folder."); } }
-    void OpenVJoyDownload() {
-        copyDownload.Visible = false; copyDownload.Enabled = false; copyDownload.Text = "Copy download link";
-        try { ExternalLinks.OpenVJoy(launchBrowser); }
-        catch (Exception e) {
-            TechnicalLog("vjoy_download_page_error", e.ToString());
-            message.Text = "Unable to open the vJoy download page.";
-            copyDownload.Visible = true; copyDownload.Enabled = true;
-        }
+    static string Quote(string value) { return "\"" + value + "\""; }
+    ProcessStartInfo RepairStartInfo() {
+        var directory = AppDomain.CurrentDomain.BaseDirectory;
+        return new ProcessStartInfo(Path.Combine(directory, "runtime", "companion-engine.exe"),
+            Quote(Path.Combine(directory, "vjoy-setup.cjs")) + " --repair --install always --state-dir " + Quote(DataFolder)) {
+            UseShellExecute = true, Verb = "runas", WindowStyle = ProcessWindowStyle.Hidden, WorkingDirectory = directory };
+    }
+    void RepairDriver() {
+        repair.Enabled = false; checkAgain.Enabled = false; repairNote = null;
+        message.Text = "Repairing the virtual controller. Approve the Windows permission prompt; this can take a minute.";
+        StopBackend(); ClearPairing();
+        var info = RepairStartInfo();
+        var worker = new Thread(delegate () {
+            int code = -1; bool cancelled = false;
+            try { using (var process = Process.Start(info)) { process.WaitForExit(); code = process.ExitCode; } }
+            catch (System.ComponentModel.Win32Exception e) { cancelled = e.NativeErrorCode == 1223; TechnicalLog("repair_start_error", e.ToString()); }
+            catch (Exception e) { TechnicalLog("repair_start_error", e.ToString()); }
+            Post(delegate { FinishRepair(code, cancelled); StartBackend(); });
+        });
+        worker.IsBackground = true; worker.Start();
+    }
+    // Exit codes match SetupExit in desktop/src/drivers/vjoy/vjoy-setup.ts.
+    void FinishRepair(int code, bool cancelled) {
+        repair.Enabled = true; checkAgain.Enabled = true;
+        TechnicalLog("repair_finished", "exit=" + code + " cancelled=" + cancelled);
+        repairNote = cancelled ? "Repair was cancelled. Click Repair driver to try again."
+            : code == 0 ? null
+            : code == 22 ? "All 16 vJoy devices are in use by other apps. Remove one you no longer need, then click Repair driver."
+            : code == 21 ? "The virtual controller could not be configured. Restart Windows, then click Repair driver again."
+            : "The driver could not be repaired. Restart Windows and try again, or open the logs folder.";
+        if (repairNote != null) message.Text = repairNote;
     }
     static void TechnicalLog(string name, string detail) {
         try { Directory.CreateDirectory(LogsFolder); string file = Path.Combine(LogsFolder, "window.jsonl");
@@ -197,8 +224,9 @@ class CompanionWindow : Form {
             var status = Json.Deserialize<Dictionary<string, object>>(line);
             if ((string)status["type"] == "fatal") { message.Text = (string)status["message"]; return; }
             bool ready = (string)status["virtualController"] == "READY", connected = (string)status["phone"] == "CONNECTED";
-            driverRequired = status.ContainsKey("issueCode") && (string)status["issueCode"] == "DRIVER_MISSING";
-            driver.Text = "Virtual Controller\n" + (driverRequired ? "○ Driver required" : ready ? "● Ready" : "○ Not available");
+            string issueCode = status.ContainsKey("issueCode") ? (string)status["issueCode"] : "";
+            driverRequired = issueCode == "DRIVER_MISSING" || issueCode == "DRIVER_MISMATCH" || issueCode == "DEVICE_UNAVAILABLE";
+            driver.Text = "Virtual Controller\n" + (driverRequired ? "○ Needs repair" : ready ? "● Ready" : "○ Not available");
             driver.ForeColor = ready ? Color.FromArgb(15, 130, 95) : Color.FromArgb(150, 50, 30);
             bool lost = status.ContainsKey("issueCode") && (string)status["issueCode"] == "PHONE_LOST";
             phone.Text = "Phone   " + (connected ? "● Connected" : lost ? "○ Connection lost" : "○ Waiting");
@@ -211,14 +239,15 @@ class CompanionWindow : Form {
                 checks.Text = "Driver: " + health["driver"] + " | Device: " + health["device"] + "\nPort: " + health["port"] + " | QR: " + health["qr"];
             }
             message.Text = (string)status["message"]; pwaUrl = (string)status["pwaUrl"]; localWebUrl = (string)status["localWebUrl"];
-            if (driverRequired) message.Text = "FPV Phone Controller requires vJoy to create the virtual joystick.";
-            checkAgain.Visible = driverRequired;
-            copyDownload.Visible = false; copyDownload.Enabled = false;
+            if (ready) repairNote = null;
+            if (driverRequired) message.Text = repairNote ?? "The virtual controller needs repair.";
+            checkAgain.Visible = driverRequired; repair.Visible = driverRequired;
+            object deviceValue;
+            var device = status.TryGetValue("device", out deviceValue) ? deviceValue as Dictionary<string, object> : null;
+            deviceInfo.Text = device == null ? "" : DeviceDescription(Convert.ToInt32(device["id"]), Convert.ToInt32(device["axes"]), Convert.ToInt32(device["buttons"]));
             qr.Visible = !driverRequired; caption.Visible = !driverRequired;
             copy.Enabled = (string)status["websocket"] == "LISTENING"; selectedAddress = (string)status["selectedAddress"];
             regenerate.Enabled = copy.Enabled; retry.Visible = !copy.Enabled && !driverRequired;
-            object issue;
-            install.Visible = status.TryGetValue("issueCode", out issue) && ((string)issue == "DRIVER_MISSING" || (string)issue == "DRIVER_MISMATCH");
             object link, image;
             if (status.TryGetValue("pairingUrl", out link)) pairingUrl = (string)link;
             if (status.TryGetValue("qrPngBase64", out image) && (string)image != lastQr && copy.Enabled) {
@@ -244,6 +273,11 @@ class CompanionWindow : Form {
             var chosen = addresses.SelectedItem as AddressItem;
             endpoint.Text = chosen == null ? "" : chosen.Endpoint;
         } catch (Exception e) { TechnicalLog("status_error", e.ToString()); updating = false; message.Text = "Could not read app status. Retry or open the logs folder."; }
+    }
+    static string DeviceDescription(int id, int axes, int buttons) {
+        string text = "vJoy device " + id + " · " + axes + " axes · " + buttons + " buttons";
+        if (buttons < 8) text += "\nThis vJoy device has " + buttons + " buttons; buttons above " + buttons + " are ignored.";
+        return text;
     }
     void StopBackend() {
         var process = backend; backend = null; if (process == null) return;

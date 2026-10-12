@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { spawn, execFileSync } from 'node:child_process';
+import { spawn, spawnSync, execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { readFile, writeFile, rm } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { createServer } from 'node:net';
@@ -16,6 +17,13 @@ const dataDirectory = join(root, 'work/package-test-' + Date.now());
 const require = createRequire(join(directory, 'companion.cjs'));
 assert.equal(typeof require('koffi').load, 'function');
 execFileSync(join(directory, 'FPVPhoneController.exe'), ['--self-test'], { timeout: 10000, env: { ...process.env, FPV_DATA_DIR: dataDirectory } });
+const vJoySetup = await readFile(join(directory, 'vjoy/vJoySetup_v2.2.2.0_Win10_Win11.exe'));
+assert.equal(createHash('sha256').update(vJoySetup).digest('hex'), 'ef569a3105cd301b89580f18f60c66b339e95296acf2c0dfcaf4b4bbf8ab68fe');
+assert.match(await readFile(join(directory, 'licenses/vJoy-LICENSE.txt'), 'utf8'), /MIT License/);
+// Probe never elevates: 0 = fitting device recorded, 10 = installer/Repair driver must run elevated.
+const vJoyProbe = spawnSync(join(directory, 'runtime/companion-engine.exe'), [join(directory, 'vjoy-setup.cjs'), '--probe', '--state-dir', dataDirectory], { timeout: 30000, windowsHide: true });
+assert.ok([0, 10].includes(vJoyProbe.status), 'vJoy probe exit ' + vJoyProbe.status);
+if (vJoyProbe.status === 0) assert.ok(JSON.parse(await readFile(join(dataDirectory, 'vjoy-device.json'), 'utf8')).deviceId >= 1);
 const manifest = JSON.parse(await readFile(join(directory, 'phone/manifest.webmanifest'), 'utf8'));
 assert.equal(manifest.display, 'standalone'); assert.equal(manifest.orientation, 'landscape');
 const ngsw = JSON.parse(await readFile(join(directory, 'phone/ngsw.json'), 'utf8'));

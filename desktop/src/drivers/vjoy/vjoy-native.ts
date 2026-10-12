@@ -23,6 +23,11 @@ export function loadVJoyNative(path: string) {
   return {
     enabled: (): boolean => Boolean(enabled()),
     matches: (): boolean => Boolean(matches([0], [0])),
+    /** BCD-like versions reported by DriverMatch, e.g. 0x0222 for 2.2.2.0. */
+    versions: (): { dll: number; driver: number } => {
+      const dll = [0], driver = [0]; matches(dll, driver);
+      return { dll: dll[0], driver: driver[0] };
+    },
     exists: (id: number): boolean => Boolean(exists(id)),
     status: (id: number): number => Number(status(id)),
     axisExists: (id: number, axis: number): boolean => Boolean(axisExists(id, axis)),

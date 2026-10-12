@@ -1,12 +1,5 @@
-using System;
-using System.Diagnostics;
-
 static class DesktopConfiguration {
-    public const string VJOY_DOWNLOAD_URL = "https://www.vjoy.org/download-for-windows";
-}
-
-static class ExternalLinks {
-    public static void OpenVJoy(Action<ProcessStartInfo> launch) {
-        launch(new ProcessStartInfo(DesktopConfiguration.VJOY_DOWNLOAD_URL) { UseShellExecute = true });
-    }
+    public const string VJOY_VERSION = "2.2.2.0";
+    // Shown only as help text; the driver installer is bundled with the app.
+    public const string VJOY_PROJECT_URL = "https://github.com/BrunnerInnovation/vJoy";
 }

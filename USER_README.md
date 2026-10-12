@@ -6,7 +6,7 @@ Use a Windows 11 x64 PC and an Android phone. Chrome for Android, updated, is th
 
 Download the Setup from the official beta link, install it and open FPV Phone Controller. No Node.js or development tools are required. The beta installer is unsigned; verify who sent it before accepting any Windows warning.
 
-The virtual joystick requires the separate signed BRUNNER vJoy 2.2.2.0 driver. If it is missing, click Install vJoy to open the download page in your browser. FPV Phone Controller stays open and does not download or install the driver. After installing, click Check again. In Configure vJoy, enable device 1 with X, Y, Z and Slider. Driver installation may ask for administrator permission.
+The Setup includes the virtual joystick driver (vJoy 2.2.2.0, signed by Brunner). If your PC does not have a compatible vJoy yet, the Setup installs and configures it for you; Windows asks for administrator permission once. If vJoy is already installed and has a suitable device, no permission is requested. The Setup never changes vJoy devices you already use for other apps: if device 1 is taken, it creates the next free device. If you cancel the permission prompt, the app is still installed and offers Repair driver.
 
 ## Connecting your phone
 
@@ -21,13 +21,13 @@ Regenerate QR restarts the connection and invalidates the previous link. Scan th
 
 ## Uncrashed setup
 
-Select vJoy Device. Assign each axis by moving it alone: roll = X, pitch = Y, yaw = Z, throttle = Slider. Run Stick calibration across the full range. Leave Throttle gamepad mode off. Axis numbers can differ; do not assume throttle is Axis3.
+Select vJoy Device (Advanced shows which vJoy device number the app uses). Assign each axis by moving it alone: roll = X, pitch = Y, yaw = Z, throttle = Slider. Run Stick calibration across the full range. Leave Throttle gamepad mode off. Axis numbers can differ; do not assume throttle is Axis3.
 
 To check Windows first: Advanced > Test joystick opens joy.cpl. X/Y must follow the right stick; Z yaw; Slider throttle.
 
 ## Troubleshooting
 
-- Driver required: Install vJoy, configure device 1 and Check again. If the browser cannot open, use Copy download link.
+- Virtual controller needs repair: click Repair driver and accept the Windows permission prompt. It reinstalls the bundled driver and configures the device, then checks again.
 - Joystick occupied: close other feeders and Retry.
 - Port occupied: close the other companion/app using the displayed port and Retry.
 - No network: connect Wi-Fi/Ethernet or USB tethering; choose the shared network in Advanced.
@@ -42,8 +42,8 @@ If packets stop for 250 ms, failsafe resets the controls. Keep the phone app vis
 
 Close the companion. Windows Settings > Apps > Installed apps > FPV Phone Controller > Uninstall.
 
-vJoy is a separate driver and remains installed. Logs and onboarding preferences remain in %LOCALAPPDATA%/FPVPhoneController; delete that folder manually if desired.
+Uninstalling FPV Phone Controller does not uninstall vJoy, because other apps may use it. To remove it, uninstall "vJoy Device Driver" from Installed apps. Logs, preferences and the chosen vJoy device remain in %LOCALAPPDATA%/FPVPhoneController; delete that folder manually if desired.
 
 ## Botones virtuales
 
-En Configure vJoy habilita al menos 8 botones en el dispositivo existente. ARM = Button 1 (toggle), RESET = Button 2 (mantener pulsado), AUX 1/2 = Buttons 3/4 (toggle). Compruébalos primero en joy.cpl → vJoy → Properties → Test. Al desconectarte, todos se liberan. Los nombres no asignan automáticamente acciones del simulador.
+El instalador configura el dispositivo con 8 botones. Si usas un dispositivo vJoy que ya tenía menos, los botones por encima de ese número se ignoran y Advanced lo indica. ARM = Button 1 (toggle), RESET = Button 2 (mantener pulsado), AUX 1/2 = Buttons 3/4 (toggle). Compruébalos primero en joy.cpl → vJoy → Properties → Test. Al desconectarte, todos se liberan. Los nombres no asignan automáticamente acciones del simulador.

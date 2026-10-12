@@ -57,7 +57,7 @@ Single release command: npm run release
 
 It runs tests, all builds, native packaging verification and installer compilation. Only after success does it copy the versioned installer, release.json, SHA256SUMS.txt, USER_README.md and CLEAN_PC_CHECKLIST.md to release/. Older versioned installers can coexist there.
 
-The compiler is downloaded from the official source with pinned hash and cached under .tools. Node's license is fetched during native build. The installer is per-user, unsigned, with no silent driver installation or firewall changes.
+The compiler is downloaded from the official source with pinned hash and cached under .tools. Node's license is fetched during native build. The installer is per-user and unsigned. It bundles the official vJoy 2.2.2.0 installer (downloaded to .tools with a pinned SHA-256) and runs it elevated only when vJoy is missing or incompatible; see docs/DISTRIBUTION.md, "vJoy integrado". It makes no firewall changes.
 
 Publish the new PWA by pushing to GitHub/Vercel, then upload the release installer and checksum to a beta release page. No upload or public release is automatic. Send testers that release page URL. Do not commit release/, dist/ or node_modules/.
 
@@ -65,4 +65,4 @@ Publish the new PWA by pushing to GitHub/Vercel, then upload the release install
 
 Follow CLEAN_PC_CHECKLIST.md on another physical PC. Fake-driver tests do not certify the real driver, installer, Chrome permissions or Uncrashed on another machine.
 
-Known limits: unsigned installer/SmartScreen, separate vJoy installation, only Windows 11 x64 targeted, no browser/version compatibility matrix yet, trusted LAN only, local WS is unencrypted, no automatic updates or advanced reconnection, first PWA load needs Internet, network/firewall restrictions can block pairing. The existing failsafe handles packet silence; forcibly killing the PC/process cannot guarantee orderly driver release.
+Known limits: unsigned installer/SmartScreen, only Windows 11 x64 targeted, no browser/version compatibility matrix yet, trusted LAN only, local WS is unencrypted, no automatic updates or advanced reconnection, first PWA load needs Internet, network/firewall restrictions can block pairing. The existing failsafe handles packet silence; forcibly killing the PC/process cannot guarantee orderly driver release.

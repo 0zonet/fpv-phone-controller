@@ -14,7 +14,7 @@ Los nombres son etiquetas configurables, no acciones impuestas al simulador. Con
 
 ## Probar en Windows
 
-1. Cierra el companion y abre Configure vJoy. En el dispositivo que ya utilizas conserva los ejes existentes y habilita **al menos 8 botones**. Aplica y vuelve a abrir el companion.
+1. El instalador configura el dispositivo vJoy con 8 botones. Si el companion usa un dispositivo con menos botones, los que superen ese número se ignoran y Advanced lo indica ("This vJoy device has N buttons…").
 2. Instala esta versión del companion y publica/actualiza la PWA. Conecta por QR.
 3. Ejecuta joy.cpl, selecciona vJoy Device y abre Properties → Test.
 4. ARM enciende el botón 1 hasta otro tap. RESET enciende el 2 mientras lo mantienes presionado. AUX 1/2 alternan los botones 3/4.

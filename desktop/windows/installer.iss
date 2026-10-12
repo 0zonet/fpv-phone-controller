@@ -34,3 +34,45 @@ Name: "{group}\Help"; Filename: "{app}\USER_README.html"
 Name: "{group}\Uninstall"; Filename: "{uninstallexe}"
 [Run]
 Filename: "{app}\FPVPhoneController.exe"; Description: "Open FPV Phone Controller"; Flags: nowait postinstall skipifsilent
+[Code]
+// vJoy is bundled ({app}\vjoy) and configured by vjoy-setup.cjs (desktop/src/drivers/vjoy/vjoy-setup.ts).
+// 1. Probe without admin: a compatible vJoy with a fitting device is just recorded, no UAC.
+// 2. Only if vJoy is missing/incompatible or no fitting device exists: one elevated run that
+//    installs vJoy silently (if needed) and creates the device on the first free ID.
+// Cancelling the UAC keeps the app installed; the window then offers "Repair driver".
+// Uninstalling the app never uninstalls vJoy, because other apps may use it.
+const
+  VJoyNeedsAdmin = 10; // SetupExit.NEEDS_ADMIN
+
+function VJoySetupParams(Mode: String): String;
+begin
+  Result := AddQuotes(ExpandConstant('{app}\vjoy-setup.cjs')) + ' ' + Mode +
+    ' --state-dir ' + AddQuotes(ExpandConstant('{localappdata}\FPVPhoneController'));
+end;
+
+procedure SetupVJoy;
+var
+  Engine: String;
+  ResultCode: Integer;
+begin
+  Engine := ExpandConstant('{app}\runtime\companion-engine.exe');
+  WizardForm.StatusLabel.Caption := 'Checking the virtual controller driver...';
+  if not Exec(Engine, VJoySetupParams('--probe'), ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+  begin
+    Log('vJoy probe could not start: ' + SysErrorMessage(ResultCode));
+    Exit;
+  end;
+  Log('vJoy probe exit code: ' + IntToStr(ResultCode));
+  if ResultCode <> VJoyNeedsAdmin then Exit;
+  WizardForm.StatusLabel.Caption := 'Installing the virtual controller driver...';
+  if ShellExec('runas', Engine, VJoySetupParams('--repair --install if-needed'), ExpandConstant('{app}'),
+    SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+    Log('vJoy setup exit code: ' + IntToStr(ResultCode))
+  else
+    Log('vJoy setup not run (UAC cancelled or failed): ' + SysErrorMessage(ResultCode));
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep = ssPostInstall then SetupVJoy;
+end;

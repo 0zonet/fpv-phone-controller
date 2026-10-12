@@ -32,7 +32,16 @@ Resultados:
 - dist/FPVPhoneControllerSetup.exe: instalador para compartir.
 - dist/release.json: metadatos del artefacto.
 
-El build no copia vJoy ni ejecuta su instalador. Node se toma del runtime del desarrollador; su versión y licencia deben revisarse antes de una release. El build recupera su licencia oficial por HTTPS.
+El build descarga el instalador oficial de vJoy 2.2.2.0 (BrunnerInnovation, firmado por Brunner Elektronik AG) a .tools/vjoy-2.2.2.0, verifica su SHA-256 fijado en scripts/windows-tools.mjs y lo copia a dist/windows/vjoy. El binario no se commitea. Node se toma del runtime del desarrollador; su versión y licencia deben revisarse antes de una release. El build recupera su licencia oficial por HTTPS.
+
+## vJoy integrado
+
+El Setup sigue siendo por usuario (PrivilegesRequired=lowest). Al final de la instalación:
+1. Ejecuta sin admin `vjoy-setup.cjs --probe`. Si vJoy ≥ 2.2.2.0 está instalado, la DLL coincide con el driver y existe un dispositivo con X, Y, Z, Slider y 8 botones (el guardado antes, o el 1), guarda su ID en %LOCALAPPDATA%\FPVPhoneController\vjoy-device.json y termina sin UAC.
+2. Si no, ejecuta una sola vez con UAC (`runas`) `vjoy-setup.cjs --repair --install if-needed`: instala vJoy en silencio (/VERYSILENT /SUPPRESSMSGBOXES /NORESTART) solo si falta o es incompatible y crea el dispositivo con vJoyConfig en el primer ID libre. Nunca usa -f ni modifica dispositivos existentes.
+3. Si el usuario cancela el UAC, la app queda instalada y la ventana ofrece Repair driver, que ejecuta el mismo asistente con `--install always`.
+
+Desinstalar la app no desinstala vJoy, porque otras aplicaciones pueden usarlo. El companion lee el ID guardado; VJOY_DEVICE_ID sigue teniendo prioridad para desarrollo.
 
 ## Vercel
 
@@ -82,13 +91,13 @@ El transporte local ws no cifra el tráfico: solo redes de confianza. El CLI npm
 
 Usa otro Windows 11 x64 o una VM con snapshots (el driver puede necesitar entorno físico).
 1. Comprueba que no están instalados Node/npm/Angular y ejecuta el Setup.
-2. Con vJoy ausente, comprueba el aviso y que Install driver abre instrucciones; no debe iniciar una instalación oculta.
-3. Instala/configura vJoy explícitamente y pulsa Retry. Comprueba READY/LISTENING.
+2. Con vJoy ausente, el Setup pide un único UAC e instala vJoy. Comprueba READY/LISTENING al abrir la app.
+3. Repite cancelando el UAC: la app muestra Repair driver y, tras aceptarlo, READY/LISTENING.
 4. Comparte Wi-Fi/USB; comprueba que aparece un QR.
 5. Publica la actualización de la PWA en Vercel e instala el nuevo companion. En Android escanea el QR y permite acceso LAN.
 6. Verifica Phone CONNECTED, los cuatro ejes en joy.cpl y luego Uncrashed.
 7. Cierra el companion y comprueba reset/liberación; reinícialo y escanea el nuevo QR.
 8. Prueba cambio de red, firewall bloqueado, origen ajeno, token antiguo, driver ocupado y puerto ocupado.
-9. Desinstala desde Windows y comprueba que desaparecen app y accesos directos. vJoy es separado y permanece instalado.
+9. Desinstala desde Windows y comprueba que desaparecen app y accesos directos. vJoy permanece instalado.
 
 test:package usa un driver fake de forma explícita para validar el artefacto sin adquirir el dispositivo real; no sustituye la prueba del instalador, Android o Uncrashed.

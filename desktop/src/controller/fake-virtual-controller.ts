@@ -1,5 +1,5 @@
 import { neutralButtons, normalizeButtons } from '../../../shared/src/index.js';
-import type { VirtualController } from './virtual-controller.js';
+import type { VirtualController, VirtualDeviceInfo } from './virtual-controller.js';
 import { safeAxes, type VirtualControllerAxes } from './virtual-controller.types.js';
 
 /** Test double; never exposes a Windows device. */
@@ -10,6 +10,7 @@ export class FakeVirtualController implements VirtualController {
   axes: VirtualControllerAxes = safeAxes();
   readonly updates: VirtualControllerAxes[] = [];
   readonly calls: string[] = [];
+  get device(): VirtualDeviceInfo | undefined { return this.connected ? { id: 1, axes: 4, buttons: 8 } : undefined; }
   async connect(): Promise<void> { this.calls.push('connect'); this.connected = true; }
   async disconnect(): Promise<void> { this.calls.push('disconnect'); this.connected = false; }
   updateAxes(axes: VirtualControllerAxes): void {

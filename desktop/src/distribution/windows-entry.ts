@@ -13,6 +13,8 @@ import { loadDistributionConfig } from './distribution-config.js';
 import { servePhone } from './static-phone.js';
 import { StructuredLogger } from './structured-logger.js';
 import { userIssue, connectionHelp } from './user-errors.js';
+import { readVJoyDevice } from './vjoy-device-file.js';
+import type { VirtualDeviceInfo } from '../controller/virtual-controller.js';
 import { PRODUCT_VERSION } from '../../../shared/src/product-version.js';
 const dataDirectory = process.env['FPV_DATA_DIR'] ?? join(process.env['LOCALAPPDATA'] ?? join(homedir(), 'AppData', 'Local'), 'FPVPhoneController');
 const logger = new StructuredLogger(dataDirectory, PRODUCT_VERSION);
@@ -30,7 +32,8 @@ async function main(): Promise<void> {
     websocket: 'STOPPED', phone: 'DISCONNECTED', port, addresses: endpoints, health,
     selectedAddress: selected?.address ?? '', pwaUrl: distribution.pwaUrl,
     localWebUrl: selected ? 'http://' + selected.address + ':' + port : '',
-    logsDirectory: logger.directory, pairingUrl: '', qrPngBase64: '', issueCode: '', message: '' };
+    logsDirectory: logger.directory, pairingUrl: '', qrPngBase64: '', issueCode: '', message: '',
+    device: null as VirtualDeviceInfo | null };
   const emit = (): void => {
     if (!logger.available && !state.message) state.message = 'Logs could not be saved. Check disk space and app permissions.';
     process.stdout.write(JSON.stringify(state) + '\n');
@@ -44,7 +47,7 @@ async function main(): Promise<void> {
       const issue = userIssue(line);
       logger.write('controller_error', { detail: line, code: issue.code }, 'error');
       health.device = health.websocket = 'Not available';
-      state.virtualController = 'NOT AVAILABLE'; state.websocket = 'STOPPED'; state.phone = 'DISCONNECTED';
+      state.virtualController = 'NOT AVAILABLE'; state.websocket = 'STOPPED'; state.phone = 'DISCONNECTED'; state.device = null;
       state.issueCode = issue.code; state.message = issue.message; emit();
     } else if (line === 'FAILSAFE ACTIVE') {
       logger.write('failsafe'); state.message = 'Failsafe active. Controls were reset. Lower throttle before reconnecting.'; emit();
@@ -57,7 +60,10 @@ async function main(): Promise<void> {
     logger.write('network_missing', {}, 'error'); emit(); return;
   }
   logger.write('network_selected', { ip: selected.address, port });
-  const config = { ...loadConfig(), websocketHost: selected.address };
+  const loaded = loadConfig();
+  // VJOY_DEVICE_ID (developer override) wins over the device chosen by the installer or Repair driver.
+  const deviceId = process.env['VJOY_DEVICE_ID'] ? loaded.controller.deviceId : readVJoyDevice(dataDirectory) ?? loaded.controller.deviceId;
+  const config = { ...loaded, websocketHost: selected.address, controller: { ...loaded.controller, deviceId } };
   const origin = 'http://' + selected.address + ':' + port;
   const origins = [origin, ...(distribution.pwaUrl ? [new URL(distribution.pwaUrl).origin] : [])];
   const http = createServer(servePhone(join(directory, 'phone')));
@@ -76,6 +82,7 @@ async function main(): Promise<void> {
       }
     });
     state.pairingUrl = invitation.url; state.qrPngBase64 = invitation.qrPngBase64;
+    state.device = driver.device ?? null;
     state.virtualController = 'READY'; state.websocket = 'LISTENING'; health.websocket = health.port = 'Ready';
     logger.write('server_started', { ip: selected.address, port }); emit();
   } catch (error) {
@@ -102,7 +109,7 @@ async function main(): Promise<void> {
     if (closing) return; closing = true; clearTimeout(waiting);
     try { await companion.shutdown(); } catch (error) { logger.write('shutdown_error', { detail: String(error) }, 'error'); }
     state.websocket = 'STOPPED'; state.virtualController = 'NOT AVAILABLE'; state.phone = 'DISCONNECTED';
-    health.websocket = 'Stopped'; health.device = 'Released'; logger.write('shutdown'); emit(); process.exit();
+    health.websocket = 'Stopped'; health.device = 'Released'; state.device = null; logger.write('shutdown'); emit(); process.exit();
   }
   const input = createInterface({ input: process.stdin });
   input.on('line', line => { if (line === 'shutdown') void shutdown(); });

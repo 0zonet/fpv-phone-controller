@@ -4,7 +4,7 @@ FPV Phone Controller redistribuye los componentes de abajo. Los textos completos
 
 Auditoría: 2026-10-12, versión `0.4.0-beta.2`. Se generó a partir de lo que **realmente se distribuye**: el `3rdpartylicenses.txt` de Angular para la PWA, el metafile de esbuild para el backend (`desktop/src/distribution/windows-entry.ts`) y los archivos que copia `scripts/build-desktop.mjs`. Las herramientas de build y test que no se distribuyen aparecen al final.
 
-**Resultado: todas las dependencias distribuidas tienen licencias permisivas (MIT, Apache-2.0, 0BSD, OFL-1.1, Inno Setup License). Ninguna es GPL, LGPL, AGPL ni source-available, y ninguna impide cobrar, pedir donaciones ni vender el producto.**
+**Resultado: todas las dependencias distribuidas tienen licencias permisivas (MIT, Apache-2.0, 0BSD, OFL-1.1, Inno Setup License; vJoy es MIT). Ninguna es GPL, LGPL, AGPL ni source-available, y ninguna impide cobrar, pedir donaciones ni vender el producto.**
 
 ## PWA (`phone/`, desplegada en Vercel y copiada en `{app}\phone`)
 
@@ -43,6 +43,14 @@ Sobre koffi: versiones antiguas de koffi se publicaron con LGPL; la 3.3.2 que se
 
 Compilada con el `csc.exe` de .NET Framework 4.x. Solo usa ensamblados de .NET Framework que forman parte de Windows (`System.Windows.Forms`, `System.Drawing`, `System.Web.Extensions`), que no se redistribuyen. No hay dependencias de terceros.
 
+## Driver de joystick virtual (`{app}\vjoy\`)
+
+| Componente | Versión | Licencia | URL |
+|---|---|---|---|
+| vJoy (instalador oficial `vJoySetup_v2.2.2.0_Win10_Win11.exe`, sin modificar) | 2.2.2.0 | MIT (© 2017 Shaul Eizikovich) | https://github.com/BrunnerInnovation/vJoy |
+
+Se redistribuye el instalador firmado por Brunner Elektronik AG, verificado con SHA-256 `ef569a3105cd301b89580f18f60c66b339e95296acf2c0dfcaf4b4bbf8ab68fe`. Su licencia está en `licenses/vJoy-LICENSE.txt` y se menciona en Advanced. "vJoy" no se usa como nombre ni marca del producto. Ese instalador lleva dentro, además, componentes de Microsoft que vJoy redistribuye (runtime de Visual C++ y `hidkmdf.sys` del WDK) bajo los términos de redistribución de Microsoft. No los extraemos ni los redistribuimos por separado.
+
 ## Instalador (`FPVPhoneControllerSetup.exe`)
 
 | Componente | Versión | Licencia | URL |
@@ -54,7 +62,6 @@ El `license.txt` incluido con Inno Setup 7.1.0 permite expresamente el uso comer
 ## Pendiente en fases posteriores
 
 Se añadirán a este archivo cuando entren en el producto:
-- **vJoy** (fase 1): MIT. No se usará "vJoy" como nombre ni marca del producto.
 - **WebView2 SDK** (fase 5, si la prueba técnica sale bien): `Microsoft.Web.WebView2.Core.dll`, `…WinForms.dll` y `WebView2Loader.dll`, con licencia BSD-3-Clause de Microsoft. El Runtime de WebView2 viene con Windows 11 y no se redistribuye.
 - **jsQR** (fase 7, fallback del escáner QR): Apache-2.0. Hoy solo es devDependency de `scripts/test-package.mjs` y no se distribuye.
 

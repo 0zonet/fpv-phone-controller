@@ -1,24 +1,29 @@
 import { neutralButtons } from '../../../../shared/src/index.js';
-import { requireVJoyButtons, writeVJoyButtons } from './vjoy-buttons.js';
+import { writeVJoyButtons } from './vjoy-buttons.js';
 import { existsSync } from 'node:fs';
 import { isAbsolute, join } from 'node:path';
-import type { VirtualController } from '../../controller/virtual-controller.js';
+import type { VirtualController, VirtualDeviceInfo } from '../../controller/virtual-controller.js';
 import { safeAxes, type VirtualControllerAxes } from '../../controller/virtual-controller.types.js';
 import { loadVJoyNative } from './vjoy-native.js';
 
-const axisUsage = { roll: 0x30, pitch: 0x31, yaw: 0x32, throttle: 0x36 } as const;
+/** HID usages: X, Y, Z and Slider 0. */
+export const axisUsage = { roll: 0x30, pitch: 0x31, yaw: 0x32, throttle: 0x36 } as const;
 interface AxisRange { readonly min: number; readonly max: number; }
 
 export class VJoyController implements VirtualController {
   private native: ReturnType<typeof loadVJoyNative> | undefined;
   private connected = false;
+  private buttons = 0;
   private readonly ranges = new Map<keyof VirtualControllerAxes, AxisRange>();
   constructor(private readonly deviceId: number, private readonly dllPath?: string) {}
+  get device(): VirtualDeviceInfo | undefined {
+    return this.connected ? { id: this.deviceId, axes: this.ranges.size, buttons: this.buttons } : undefined;
+  }
   async connect(): Promise<void> {
     if (this.connected) return;
     if (process.platform !== 'win32' || process.arch !== 'x64') throw new Error('vJoy requires Windows x64 and Node.js x64.');
     if (!Number.isInteger(this.deviceId) || this.deviceId < 1 || this.deviceId > 16) throw new Error('vJoy deviceId must be 1..16.');
-    const path = this.findDll();
+    const path = findVJoyDll(this.dllPath);
     try { this.native = loadVJoyNative(path); }
     catch (error) { throw new Error('Cannot load vJoyInterface.dll. Use the x64 DLL matching the installed driver. ' + String(error)); }
     let acquired = false;
@@ -28,7 +33,7 @@ export class VJoyController implements VirtualController {
       if (!native.matches()) throw new Error('vJoy driver and SDK DLL versions do not match. Use the DLL supplied with the installed release.');
       if (!native.exists(this.deviceId)) throw new Error('vJoy device ' + this.deviceId + ' is missing. Enable it in Configure vJoy.');
       if (native.status(this.deviceId) !== 1) throw new Error('vJoy device ' + this.deviceId + ' is not free. Close other feeders or choose another device ID.');
-      requireVJoyButtons(native.buttonCount(this.deviceId));
+      this.buttons = native.buttonCount(this.deviceId);
       for (const axis of Object.keys(axisUsage) as (keyof typeof axisUsage)[]) {
         if (!native.axisExists(this.deviceId, axisUsage[axis])) throw new Error('vJoy axis ' + axis + ' is missing. Enable X, Y, Z and Slider in Configure vJoy.');
         this.ranges.set(axis, native.range(this.deviceId, axisUsage[axis]));
@@ -57,7 +62,7 @@ export class VJoyController implements VirtualController {
   }
   updateButtons(buttons: readonly boolean[]): void {
     if (!this.connected || !this.native) throw new Error('vJoy is not connected.');
-    writeVJoyButtons(buttons, this.deviceId, this.native.setButton);
+    writeVJoyButtons(buttons, this.deviceId, this.native.setButton, this.buttons);
   }
   reset(): void {
     try { this.updateAxes(safeAxes()); }
@@ -72,15 +77,15 @@ export class VJoyController implements VirtualController {
       finally { this.connected = false; this.native = undefined; this.ranges.clear(); native.unload(); }
     }
   }
-  private findDll(): string {
-    if (this.dllPath) {
-      if (!isAbsolute(this.dllPath) || !existsSync(this.dllPath)) throw new Error('VJOY_DLL_PATH must point to an existing absolute x64 vJoyInterface.dll path.');
-      return this.dllPath;
-    }
-    const base = process.env['ProgramW6432'] ?? process.env['ProgramFiles'] ?? 'C:\\Program Files';
-    const candidates = [join(base, 'vJoy', 'x64', 'vJoyInterface.dll'), join(base, 'vJoy', 'SDK', 'x64', 'vJoyInterface.dll'), join(base, 'vJoy', 'vJoyInterface.dll')];
-    const found = candidates.find(path => existsSync(path));
-    if (!found) throw new Error('vJoyInterface.dll not found. Install vJoy 2.2.2.0 manually, then set VJOY_DLL_PATH to its x64 SDK DLL if necessary. See desktop/README.md.');
-    return found;
+}
+export function findVJoyDll(dllPath?: string): string {
+  if (dllPath) {
+    if (!isAbsolute(dllPath) || !existsSync(dllPath)) throw new Error('VJOY_DLL_PATH must point to an existing absolute x64 vJoyInterface.dll path.');
+    return dllPath;
   }
+  const base = process.env['ProgramW6432'] ?? process.env['ProgramFiles'] ?? 'C:\\Program Files';
+  const candidates = [join(base, 'vJoy', 'x64', 'vJoyInterface.dll'), join(base, 'vJoy', 'SDK', 'x64', 'vJoyInterface.dll'), join(base, 'vJoy', 'vJoyInterface.dll')];
+  const found = candidates.find(path => existsSync(path));
+  if (!found) throw new Error('vJoyInterface.dll not found. Install vJoy 2.2.2.0, then set VJOY_DLL_PATH to its x64 SDK DLL if necessary. See desktop/README.md.');
+  return found;
 }

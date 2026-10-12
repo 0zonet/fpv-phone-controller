@@ -23,7 +23,7 @@ Fuentes comprobadas:
 - vJoyInterface.dll x64 del SDK de esa misma versión.
 - Dependencias npm: ws y Koffi. Koffi está incorporado en package.json y package-lock.json, con binarios precompilados. No se requieren herramientas C++ para la instalación npm normal.
 
-Ni el proyecto ni sus tests ejecutan instaladores, cambian firmas de Windows o configuran dispositivos automáticamente.
+Los tests no ejecutan instaladores ni configuran dispositivos. En la distribución, el Setup instala y configura vJoy automáticamente (desktop/src/drivers/vjoy/vjoy-setup.ts, ver docs/DISTRIBUTION.md). Los pasos siguientes son para desarrollo con `npm run desktop`.
 
 ## Instalar y configurar vJoy
 

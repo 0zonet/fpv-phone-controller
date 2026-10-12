@@ -6,3 +6,6 @@ work/
 .tools/
 release/
 shared/src/product-version.ts
+
+# Local copy of the vJoy installer; the build downloads and verifies its own in .tools/
+/vjoy/
