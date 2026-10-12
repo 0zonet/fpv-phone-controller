@@ -10,4 +10,5 @@ export function userIssue(error: unknown): UserIssue {
   if (/not found|not installed|cannot load|disabled|VJOY_DLL_PATH/i.test(text)) return { code: 'DRIVER_MISSING', message: 'The virtual controller driver is missing or unavailable. Click Repair driver, then Check again.' };
   return { code: 'STARTUP_FAILED', message: 'The companion could not start. Retry; if it persists, open the logs folder and share the logs.' };
 }
+export const pairingRejected = 'A phone tried to connect with an old or invalid QR. Scan the current QR on your phone.';
 export const connectionHelp = 'Still waiting for your phone. Check the shared network, allow local-network access in Chrome and review Windows private-network firewall permissions. The firewall may be blocking the connection.';

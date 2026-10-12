@@ -9,6 +9,15 @@ export interface CompanionHooks {
   httpServer?: ControllerServerOptions['httpServer'];
   authorize?: ControllerServerOptions['authorize'];
   onPhoneStatus?: (connected: boolean) => void;
+  onConnectionAttempt?: ControllerServerOptions['onConnectionAttempt'];
+}
+/** Close code sent when the PC ends the session on purpose; the phone must not auto-reconnect. */
+export const CLOSE_DISCONNECTED_BY_PC = 4001;
+export interface CompanionMetrics {
+  readonly packetsPerSecond: number;
+  /** Calibrated axes as written to the virtual controller. */
+  readonly axes: { readonly throttle: number; readonly yaw: number; readonly pitch: number; readonly roll: number };
+  readonly failsafe: boolean;
 }
 
 export async function startCompanion(config: AppConfig, controller: VirtualController, log: (line: string) => void = console.log, hooks: CompanionHooks = {}) {
@@ -17,6 +26,7 @@ export async function startCompanion(config: AppConfig, controller: VirtualContr
   log('Virtual controller: ' + config.controller.driver + ' device ' + config.controller.deviceId + ' ready');
   let shutdownPromise: Promise<void> | undefined;
   let session: ControllerSession;
+  let packetsPerSecond = 0;
   const fatal = (error: unknown): void => {
     log('Virtual controller error: ' + String(error)); process.exitCode = 1;
     void shutdown().catch(failure => log('Shutdown error: ' + String(failure)));
@@ -29,9 +39,10 @@ export async function startCompanion(config: AppConfig, controller: VirtualContr
     getReportedAxes: () => session.axes,
     getControllerMetrics: () => session.sampleMetrics(),
     debug: config.debug,
-    httpServer: hooks.httpServer, authorize: hooks.authorize,
+    httpServer: hooks.httpServer, authorize: hooks.authorize, onConnectionAttempt: hooks.onConnectionAttempt,
+    onRate: rate => { packetsPerSecond = rate; },
     onPhoneConnected: () => { log('Phone: connected'); hooks.onPhoneStatus?.(true); },
-    onPhoneDisconnected: () => { log('Phone disconnected'); hooks.onPhoneStatus?.(false); session.disconnect(); },
+    onPhoneDisconnected: () => { packetsPerSecond = 0; log('Phone disconnected'); hooks.onPhoneStatus?.(false); session.disconnect(); },
     onControllerError: fatal
   });
   hooks.httpServer?.on('error', error => server.emit('error', error));
@@ -62,5 +73,12 @@ export async function startCompanion(config: AppConfig, controller: VirtualContr
   catch (error) { await shutdown(); throw error; }
   server.on('error', fatal);
   log('WebSocket: listening on :' + config.websocketPort);
-  return { server, shutdown };
+  const metrics = (): CompanionMetrics => ({ packetsPerSecond: Math.round(packetsPerSecond), axes: { ...session.axes }, failsafe: session.failsafeActive });
+  /** Ends the phone session from the PC; returns false when no phone is connected. */
+  const disconnectPhone = (): boolean => {
+    let closed = false;
+    for (const socket of server.clients) { socket.close(CLOSE_DISCONNECTED_BY_PC, 'Disconnected from PC'); closed = true; }
+    return closed;
+  };
+  return { server, shutdown, metrics, disconnectPhone };
 }

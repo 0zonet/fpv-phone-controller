@@ -37,7 +37,8 @@ const child = spawn(join(directory, 'runtime/companion-engine.exe'), [join(direc
   cwd: directory, env: { ...process.env, FPV_DATA_DIR: dataDirectory, PORT: String(port), NODE_OPTIONS: '', NODE_PATH: '',
     PATH: join(process.env.WINDIR, 'System32') + ';' + process.env.WINDIR }, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true
 });
-let buffer = '', errors = '', connected = false, stopped = false;
+let buffer = '', errors = '', connected = false, stopped = false, rejected = false;
+const metrics = [];
 let resolveReady, rejectReady;
 const ready = new Promise((resolve, reject) => { resolveReady = resolve; rejectReady = reject; });
 const startup = setTimeout(() => rejectReady(new Error('Packaged companion startup timeout: ' + errors)), 10000);
@@ -48,6 +49,8 @@ child.stdout.on('data', chunk => {
     const end = buffer.indexOf('\n'); if (end < 0) break;
     const line = buffer.slice(0, end); buffer = buffer.slice(end + 1);
     const state = JSON.parse(line);
+    if (state.type === 'metrics') { metrics.push(state); continue; }
+    if (state.issueCode === 'PAIRING_REJECTED' && state.phoneAttempted) rejected = true;
     if (state.phone === 'CONNECTED') connected = true;
     if (state.websocket === 'STOPPED' && state.virtualController === 'NOT AVAILABLE') stopped = true;
     if (state.websocket === 'LISTENING') resolveReady(state);
@@ -92,9 +95,14 @@ try {
   socket = new WebSocket(endpoint, { origin: link.origin }); await waitOpen(socket);
   socket.send(JSON.stringify({ type: 'controller-state', sequence: 0, timestamp: Date.now(),
     axes: { throttle: .5, yaw: 0, pitch: 0, roll: 0 } }));
-  await new Promise(resolve => setTimeout(resolve, 50));
-  assert.ok(connected);
-  await new Promise(resolve => { socket.once('close', resolve); socket.close(); });
+  await new Promise(resolve => setTimeout(resolve, 200));
+  assert.ok(connected); assert.ok(rejected, 'Rejected pairing must be reported');
+  const live = metrics.at(-1);
+  assert.ok(live && metrics.length >= 2, 'metrics lines while connected');
+  assert.equal(typeof live.packetsPerSecond, 'number'); assert.equal(live.axes.throttle, .5);
+  const closedByPc = new Promise(resolve => socket.once('close', code => resolve(code)));
+  child.stdin.write('disconnect-phone\n');
+  assert.equal(await closedByPc, 4001);
   const exited = new Promise(resolve => child.once('exit', resolve));
   child.stdin.write('shutdown\n');
   const code = await Promise.race([exited, new Promise((_, reject) => {
@@ -103,7 +111,7 @@ try {
   assert.equal(code, 0); assert.ok(stopped);
   const logText = await readFile(join(state.logsDirectory, 'companion.jsonl'), 'utf8');
   const events = logText.trim().split('\n').map(line => JSON.parse(line).event);
-  for (const event of ['startup','driver_ready','network_selected','qr_generated','server_started','phone_connected','phone_disconnected','failsafe','shutdown']) assert.ok(events.includes(event), event);
+  for (const event of ['startup','driver_ready','network_selected','qr_generated','server_started','phone_attempted','pairing_rejected','phone_connected','phone_disconnect_requested','phone_disconnected','failsafe','shutdown']) assert.ok(events.includes(event), event);
   assert.ok(!logText.includes(payload.token)); assert.doesNotMatch(logText, /THR /);
   console.log('PASS: native QR UI, health, version, decoded QR, PWA route, authorized WebSocket, structured logs and shutdown.');
 } finally { clearTimeout(startup); socket?.terminate(); if (child.exitCode === null) child.kill(); }

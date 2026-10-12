@@ -29,8 +29,8 @@ To check Windows first: Advanced > Test joystick opens joy.cpl. X/Y must follow 
 
 - Virtual controller needs repair: click Repair driver and accept the Windows permission prompt. It reinstalls the bundled driver and configures the device, then checks again.
 - Joystick occupied: close other feeders and Retry.
-- Port occupied: close the other companion/app using the displayed port and Retry.
-- No network: connect Wi-Fi/Ethernet or USB tethering; choose the shared network in Advanced.
+- Port occupied: click Use another port. The app picks a free port, remembers it and shows a new QR. Or close the other app using the port and Retry.
+- No network: connect Wi-Fi/Ethernet or USB tethering (Open network settings opens Windows network settings); choose the shared network in Advanced.
 - Unable to connect: check both devices share the network, allow local-network access in Chrome and tap Retry. Review Windows private-network firewall permissions. Never disable the firewall or open router ports.
 - Invalid QR: scan the current QR again.
 - Connection lost: restore the network, lower throttle on the phone and Retry. After restarting Windows companion, scan its new QR.

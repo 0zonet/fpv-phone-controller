@@ -24,6 +24,10 @@ export interface ControllerServerOptions {
   debug?: boolean;
   httpServer?: HttpServer;
   authorize?: (peer: string, origin: string | undefined, url: string) => boolean;
+  /** Every WebSocket upgrade attempt, accepted or rejected by `authorize` (PHONE_ATTEMPTED / PAIRING_REJECTED). */
+  onConnectionAttempt?: (accepted: boolean) => void;
+  /** Received packets per second of the connected phone, once per report interval. */
+  onRate?: (packetsPerSecond: number) => void;
 }
 interface Client { readonly address: string; readonly metrics: ControllerMetrics; alive: boolean; }
 
@@ -33,7 +37,11 @@ export function createControllerWebSocketServer(options: ControllerServerOptions
     ...(options.httpServer ? { server: options.httpServer } : { port: options.port ?? defaultConfig.websocketPort,
       host: options.host ?? defaultConfig.websocketHost }),
     maxPayload: options.maxPayload ?? defaultConfig.maxPayload,
-    verifyClient: (info: { req: IncomingMessage; origin: string }) => !options.authorize || options.authorize(info.req.socket.remoteAddress ?? '', info.origin, info.req.url ?? '/')
+    verifyClient: (info: { req: IncomingMessage; origin: string }) => {
+      const accepted = !options.authorize || options.authorize(info.req.socket.remoteAddress ?? '', info.origin, info.req.url ?? '/');
+      try { options.onConnectionAttempt?.(accepted); } catch { /* Diagnostics only. */ }
+      return accepted;
+    }
   });
   const clients = new Map<WebSocket, Client>();
   server.on('connection', (socket, request) => {
@@ -78,6 +86,7 @@ export function createControllerWebSocketServer(options: ControllerServerOptions
     const outputMetrics = options.getControllerMetrics?.();
     for (const client of clients.values()) {
       const rate = client.metrics.sampleRate(now);
+      options.onRate?.(rate);
       const message = client.metrics.latest;
       if (!message) continue;
       const axes = options.getReportedAxes?.() ?? message.axes;

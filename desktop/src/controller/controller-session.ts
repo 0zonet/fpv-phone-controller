@@ -26,6 +26,7 @@ export class ControllerSession {
   }
   private readonly startedAt: number;
   get axes(): VirtualControllerAxes { return this.latestAxes; }
+  get failsafeActive(): boolean { return this.failsafe; }
   private cancel: (() => void) | undefined;
   private deadline = 0;
   private active = false;

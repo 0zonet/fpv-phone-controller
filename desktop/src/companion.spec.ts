@@ -56,3 +56,34 @@ test('si falla reset, shutdown igualmente libera el driver y cierra WebSocket', 
   await assert.rejects(companion.shutdown(), AggregateError);
   assert.equal(device.connected, false); assert.equal(companion.server.address(), null);
 });
+test('disconnectPhone cierra con 4001 y metrics publica packets/s y ejes calibrados', async () => {
+  const device = new FakeVirtualController();
+  const companion = await startCompanion({ ...defaultConfig, websocketPort: 0, websocketHost: '127.0.0.1', reportMs: 50 }, device, () => {});
+  const address = companion.server.address(); assert.ok(address && typeof address !== 'string');
+  assert.equal(companion.disconnectPhone(), false);
+  const client = new WebSocket('ws://127.0.0.1:' + address.port);
+  try {
+    await once(client, 'open');
+    for (let sequence = 0; sequence < 15; sequence++) { client.send(message(sequence)); await new Promise(resolve => setTimeout(resolve, 10)); }
+    const metrics = companion.metrics();
+    assert.ok(metrics.packetsPerSecond > 0); assert.equal(metrics.failsafe, false);
+    assert.deepEqual(metrics.axes, device.axes);
+    const closed = once(client, 'close');
+    assert.equal(companion.disconnectPhone(), true);
+    const [code] = await closed; assert.equal(code, 4001);
+    await new Promise(resolve => setTimeout(resolve, 20));
+    assert.equal(companion.metrics().packetsPerSecond, 0); assert.equal(companion.metrics().failsafe, true);
+  } finally { client.terminate(); await companion.shutdown(); }
+});
+test('cada intento de conexión se notifica, aceptado o rechazado', async () => {
+  const attempts: boolean[] = [];
+  const companion = await startCompanion({ ...defaultConfig, websocketPort: 0, websocketHost: '127.0.0.1' }, new FakeVirtualController(), () => {},
+    { authorize: (_peer, _origin, url) => url.includes('token=ok'), onConnectionAttempt: accepted => attempts.push(accepted) });
+  const address = companion.server.address(); assert.ok(address && typeof address !== 'string');
+  const rejected = new WebSocket('ws://127.0.0.1:' + address.port + '/?token=old');
+  const accepted = new WebSocket('ws://127.0.0.1:' + address.port + '/?token=ok');
+  try {
+    await once(rejected, 'error'); await once(accepted, 'open');
+    assert.deepEqual(attempts.sort(), [false, true]);
+  } finally { rejected.terminate(); accepted.terminate(); await companion.shutdown(); }
+});

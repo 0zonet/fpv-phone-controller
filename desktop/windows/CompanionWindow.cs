@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Net;
+using System.Net.Sockets;
 using System.Threading;
 using System.Text.RegularExpressions;
 using System.Web.Script.Serialization;
@@ -12,7 +14,7 @@ class CompanionWindow : Form {
     Label driver = new Label(), websocket = new Label(), phone = new Label(), message = new Label(), port = new Label();
     ComboBox addresses = new ComboBox();
     Button copy = new Button(), retry = new Button(), regenerate = new Button(), repair = new Button();
-    Button checkAgain = new Button();
+    Button checkAgain = new Button(), usePort = new Button(), networkSettings = new Button(), disconnectPhone = new Button();
     bool driverRequired = false;
     string repairNote = null;
     Label network = new Label(), checks = new Label(), deviceInfo = new Label();
@@ -57,6 +59,16 @@ class CompanionWindow : Form {
                 && window.deviceInfo.Text == "vJoy device 3 · 4 axes · 4 buttons\nThis vJoy device has 4 buttons; buttons above 4 are ignored.";
             window.ApplyStatus(Json.Serialize(readyStatus));
             passed = passed && window.deviceInfo.Text == "" && window.message.Text == "";
+            window.ApplyStatus("{\"type\":\"metrics\",\"packetsPerSecond\":60,\"axes\":{\"throttle\":0.5,\"yaw\":0,\"pitch\":0,\"roll\":0},\"failsafe\":false}");
+            passed = passed && window.message.Text == "" && !window.usePort.Visible;
+            var busy = new Dictionary<string, object>(readyStatus); busy["websocket"] = "STOPPED"; busy["issueCode"] = "PORT_BUSY"; busy["message"] = "Port already in use.";
+            window.ApplyStatus(Json.Serialize(busy));
+            passed = passed && window.portBusy && window.usePort.Text == "Use another port";
+            var offline = new Dictionary<string, object>(readyStatus); offline["websocket"] = "STOPPED"; offline["issueCode"] = "NETWORK_MISSING";
+            window.ApplyStatus(Json.Serialize(offline));
+            passed = passed && !window.portBusy && window.networkMissing && NetworkSettingsTarget == "ms-settings:network";
+            int free = FindFreePort(8080); passed = passed && free >= 8081 && free <= 8099;
+            window.ApplyStatus(Json.Serialize(readyStatus));
             if (args.Length > 1) {
                 window.ApplyStatus(File.ReadAllText(args[1]));
                 passed = passed && window.qr.Image != null && window.qr.Image.Width == 320 && window.regenerate.Enabled && !String.IsNullOrEmpty(window.pairingUrl);
@@ -106,6 +118,15 @@ class CompanionWindow : Form {
         checkAgain.Text = "Check again"; checkAgain.AutoSize = true; checkAgain.Visible = false;
         checkAgain.Click += delegate { Restart(); };
         layout.Controls.Add(checkAgain);
+        usePort.Text = "Use another port"; usePort.AutoSize = true; usePort.Visible = false;
+        usePort.Click += delegate { UseAnotherPort(); };
+        layout.Controls.Add(usePort);
+        networkSettings.Text = "Open network settings"; networkSettings.AutoSize = true; networkSettings.Visible = false;
+        networkSettings.Click += delegate { Open(NetworkSettingsTarget); };
+        layout.Controls.Add(networkSettings);
+        disconnectPhone.Text = "Disconnect phone"; disconnectPhone.AutoSize = true; disconnectPhone.Visible = false;
+        disconnectPhone.Click += delegate { SendCommand("disconnect-phone"); };
+        layout.Controls.Add(disconnectPhone);
         var advanced = new Button { Text = "Advanced >", AutoSize = true };
         layout.Controls.Add(advanced);
         var details = new FlowLayoutPanel { AutoSize = true, FlowDirection = FlowDirection.TopDown, WrapContents = false, Visible = false };
@@ -201,6 +222,36 @@ class CompanionWindow : Form {
             File.AppendAllText(file, new JavaScriptSerializer().Serialize(new { time = DateTime.UtcNow.ToString("o"), level = "info", version = BetaVersion, @event = name, detail = detail }) + Environment.NewLine);
         } catch {}
     }
+    const string NetworkSettingsTarget = "ms-settings:network";
+    bool portBusy = false, networkMissing = false;
+    static readonly string PortFile = Path.Combine(DataFolder, "port.txt");
+    // The chosen port persists; otherwise the next start would go back to 8080 and fail again.
+    static int SavedPort() {
+        try { int value; if (File.Exists(PortFile) && Int32.TryParse(File.ReadAllText(PortFile).Trim(), out value) && value >= 1024 && value <= 65535) return value; }
+        catch (Exception e) { TechnicalLog("port_read_error", e.ToString()); }
+        return 0;
+    }
+    static int FindFreePort(int current) {
+        for (int candidate = 8081; candidate <= 8099; candidate++) {
+            if (candidate == current) continue;
+            try { var listener = new TcpListener(IPAddress.Any, candidate); listener.Start(); listener.Stop(); return candidate; }
+            catch (SocketException) {}
+        }
+        return 0;
+    }
+    int currentPort = 8080;
+    void UseAnotherPort() {
+        int next = FindFreePort(currentPort);
+        if (next == 0) { message.Text = "No free port was found between 8081 and 8099. Close other apps, then Retry."; return; }
+        try { Directory.CreateDirectory(DataFolder); File.WriteAllText(PortFile, next.ToString()); }
+        catch (Exception e) { TechnicalLog("port_save_error", e.ToString()); }
+        TechnicalLog("port_changed", currentPort + " -> " + next); Restart();
+    }
+    void SendCommand(string command) {
+        var process = backend;
+        try { if (process != null && !process.HasExited) { process.StandardInput.WriteLine(command); process.StandardInput.Flush(); } }
+        catch (Exception e) { TechnicalLog("command_error", e.ToString()); }
+    }
     void ClearPairing() { pairingUrl = ""; lastQr = ""; if (qr.Image != null) { qr.Image.Dispose(); qr.Image = null; } copy.Enabled = false; regenerate.Enabled = false; }
     void Restart() { StopBackend(); ClearPairing(); copy.Text = "Copy connection link"; StartBackend(); }
     void StartBackend() {
@@ -210,6 +261,7 @@ class CompanionWindow : Form {
             RedirectStandardOutput = true, RedirectStandardError = true, RedirectStandardInput = true
         };
         if (!String.IsNullOrEmpty(selectedAddress)) info.EnvironmentVariables["FPV_BIND_ADDRESS"] = selectedAddress;
+        int saved = SavedPort(); if (saved != 0) info.EnvironmentVariables["PORT"] = saved.ToString(); else info.EnvironmentVariables.Remove("PORT");
         info.EnvironmentVariables.Remove("NODE_OPTIONS"); info.EnvironmentVariables.Remove("NODE_PATH");
         var process = new Process { StartInfo = info, EnableRaisingEvents = true }; backend = process;
         process.OutputDataReceived += (sender, e) => { if (e.Data != null) Post(delegate { if (backend == process) ApplyStatus(e.Data); }); };
@@ -223,6 +275,8 @@ class CompanionWindow : Form {
         try {
             var status = Json.Deserialize<Dictionary<string, object>>(line);
             if ((string)status["type"] == "fatal") { message.Text = (string)status["message"]; return; }
+            // Live "metrics" lines are for the new UI; this window only reads "status".
+            if ((string)status["type"] != "status") return;
             bool ready = (string)status["virtualController"] == "READY", connected = (string)status["phone"] == "CONNECTED";
             string issueCode = status.ContainsKey("issueCode") ? (string)status["issueCode"] : "";
             driverRequired = issueCode == "DRIVER_MISSING" || issueCode == "DRIVER_MISMATCH" || issueCode == "DEVICE_UNAVAILABLE";
@@ -242,6 +296,9 @@ class CompanionWindow : Form {
             if (ready) repairNote = null;
             if (driverRequired) message.Text = repairNote ?? "The virtual controller needs repair.";
             checkAgain.Visible = driverRequired; repair.Visible = driverRequired;
+            portBusy = issueCode == "PORT_BUSY"; networkMissing = issueCode == "NETWORK_MISSING";
+            usePort.Visible = portBusy; networkSettings.Visible = networkMissing; disconnectPhone.Visible = connected;
+            currentPort = Convert.ToInt32(status["port"]);
             object deviceValue;
             var device = status.TryGetValue("device", out deviceValue) ? deviceValue as Dictionary<string, object> : null;
             deviceInfo.Text = device == null ? "" : DeviceDescription(Convert.ToInt32(device["id"]), Convert.ToInt32(device["axes"]), Convert.ToInt32(device["buttons"]));

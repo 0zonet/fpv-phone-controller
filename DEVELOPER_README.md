@@ -25,6 +25,12 @@ Health checks report driver/device, actual port binding/WebSocket listening, pri
 
 Logs: %LOCALAPPDATA%/FPVPhoneController/logs/companion.jsonl, with four rotated files of approximately 2 MB each. Native-window errors use a separately bounded window.jsonl. Logs include version, lifecycle, selected IP, connection changes, failsafe and errors. They omit stick samples and redact authorization keys. FPV_DATA_DIR isolates test data. Logs stay local.
 
+Window ↔ backend: the window starts runtime/companion-engine.exe companion.cjs as a child process.
+- stdout, one JSON object per line: {"type":"status",…} on every state change (QR, health, issueCode, device, phoneAttempted); {"type":"metrics","packetsPerSecond","axes","failsafe"} at about 15 Hz while a phone is connected (axes are the calibrated values written to vJoy), plus one after it disconnects; {"type":"fatal","message"} on unexpected errors. Consumers must ignore unknown types.
+- stdin, one command per line: shutdown; disconnect-phone (closes the phone socket with code 4001, "disconnected from PC").
+- issueCode PAIRING_REJECTED: a device reached the server but its token/origin was refused (old QR). phoneAttempted (PHONE_ATTEMPTED) becomes true on the first attempt of any kind, which also rules out a firewall block.
+- Port: PORT overrides 8080. The window persists the user's choice in %LOCALAPPDATA%/FPVPhoneController/port.txt ("Use another port" picks the first free port in 8081–8099) and passes it as PORT.
+
 Regenerate QR restarts the existing companion, closes the phone connection and produces a new session token. The pairing schema is unchanged. Onboarding dismissal is a local per-user preference.
 
 ## Protocol and network
