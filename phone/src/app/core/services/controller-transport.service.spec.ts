@@ -82,7 +82,7 @@ test('no envía en CLOSING/CLOSED ni incrementa sequence por backpressure', () =
   assert.equal(JSON.parse(socket.messages[0]).sequence, 0);
   transport.disconnect();
 });
-test('error y timeout limpian recursos sin reconexión automática', () => {
+test('error y timeout del primer intento limpian recursos sin reconexión automática', () => {
   const { transport, sockets, clock } = setup();
   transport.connect('ws://localhost:8080'); sockets[0].error();
   assert.equal(transport.status(), 'error'); assert.equal(clock.tasks.size, 0);
@@ -97,13 +97,16 @@ test('reemplaza socket y descarta eventos tardíos; reinicia sequence por conexi
   assert.equal(transport.status(), 'connecting');
   sockets[1].open(); transport.send(axes);
   assert.equal(JSON.parse(sockets[1].messages[0]).sequence, 0);
-  sockets[1].close(); assert.equal(transport.status(), 'disconnected');
+  sockets[1].close(); assert.equal(transport.status(), 'connecting'); assert.equal(transport.reconnecting(), true);
+  transport.disconnect(); assert.equal(transport.status(), 'disconnected');
 });
 test('dirección inválida y fallo de envío se convierten en ERROR', () => {
   const { transport, sockets } = setup();
   transport.connect('http://localhost'); assert.equal(transport.status(), 'error'); assert.equal(sockets.length, 0);
   transport.connect('ws://localhost:8080'); sockets[0].open(); sockets[0].failSend = true;
-  transport.send(axes); assert.equal(transport.status(), 'error'); assert.equal(sockets[0].messages.length, 0);
+  // A failed send on an open connection is an unexpected end: it reconnects (D4) instead of failing.
+  transport.send(axes); assert.equal(transport.status(), 'connecting'); assert.equal(transport.connectionLost(), true); assert.equal(sockets[0].messages.length, 0);
+  transport.disconnect();
 });
 
 test('serializes all buttons separately from axes using current state', () => {

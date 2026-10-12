@@ -47,6 +47,9 @@ export class ControllerPageComponent implements OnDestroy {
   /** Connection card copy for every state except connected (docs/design/PhoneIdle.dc.html). */
   readonly card = computed(() => {
     const state = pillState(this.transport.status(), this.transport.connectionLost());
+    if (this.transport.reconnecting()) return { tone: 'connecting', eyebrow: 'SIN RESPUESTA DEL PC', title: 'Reconectando…', body: 'Se perdió la conexión. Reintentando durante unos 30 s; los botones quedan en OFF.', cta: 'Cancelar' };
+    if (this.transport.endReason() === 'rejected') return { tone: 'error', eyebrow: 'QR ANTIGUO', title: 'Este QR ya no es válido', body: 'La app de Windows se reinició o generó un QR nuevo. Escanea el QR actual con la cámara.', cta: 'Conexión manual' };
+    if (this.transport.endReason() === 'pc') return { tone: 'idle', eyebrow: 'DESCONECTADO DESDE EL PC', title: 'El PC cerró la sesión', body: 'Puedes volver a conectar cuando quieras.', cta: 'Conectar' };
     if (state === 'connecting') return { tone: 'connecting', eyebrow: 'BUSCANDO TU PC', title: 'Conectando…', body: 'Mantén el teléfono y el PC en la misma red Wi‑Fi.', cta: 'Cancelar' };
     if (state === 'lost') return { tone: 'error', eyebrow: 'SIN RESPUESTA DEL PC', title: 'Se perdió la conexión', body: 'Revisa que la app de Windows siga abierta y que el firewall permita la red local.', cta: 'Reintentar' };
     if (state === 'failed') return { tone: 'error', eyebrow: 'NO SE PUDO CONECTAR', title: 'No se pudo conectar', body: 'Comprueba la red y la app de Windows. Si la reiniciaste, escanea su nuevo QR.', cta: 'Reintentar' };

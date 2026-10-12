@@ -7,7 +7,7 @@ import { loadConfig } from '../config.js';
 import { startCompanion } from '../companion.js';
 import { VJoyController } from '../drivers/vjoy/vjoy-controller.js';
 import { FakeVirtualController } from '../controller/fake-virtual-controller.js';
-import { authorizedConnection } from '../network/local-network.js';
+import { connectionDecision } from '../network/local-network.js';
 import { PairingService } from '../pairing/pairing-service.js';
 import { loadDistributionConfig } from './distribution-config.js';
 import { servePhone } from './static-phone.js';
@@ -81,7 +81,7 @@ async function main(): Promise<void> {
     health.qr = 'Ready'; logger.write('qr_generated'); phase = 'companion';
     companion = await startCompanion(config, driver, log, {
       httpServer: http,
-      authorize: (peer, requestOrigin, url) => authorizedConnection(peer, requestOrigin, url, selected, origins, token),
+      authorize: (peer, requestOrigin, url) => connectionDecision(peer, requestOrigin, url, selected, origins, token),
       onConnectionAttempt: accepted => {
         const first = !state.phoneAttempted; state.phoneAttempted = true;
         if (first) logger.write('phone_attempted', { accepted });

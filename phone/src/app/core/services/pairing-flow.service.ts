@@ -1,4 +1,4 @@
-import { effect, inject, Injectable, OnDestroy, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, OnDestroy, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PairingService } from './pairing.service';
 import { ControllerTransportService } from './controller-transport.service';
@@ -17,6 +17,8 @@ export class PairingFlowService implements OnDestroy {
   private readonly failed = signal(false);
   readonly canRetry = signal(false);
   readonly error = this.failed.asReadonly();
+  /** The PC answered with 4003: this QR belongs to an earlier session. */
+  readonly rejected = computed(() => this.transport.endReason() === 'rejected');
 
   constructor() {
     effect(() => {

@@ -16,9 +16,9 @@ import { PRODUCT_VERSION } from '../../../../../shared/src/product-version';
         @if (flow.error()) {
           <span class="eyebrow error">NO SE PUDO CONECTAR</span>
           <h1>Unable to connect to PC</h1>
-          @if (!flow.canRetry()) { <p>Este QR no es válido. Escanea el QR actual del companion.</p> }
+          @if (!flow.canRetry() || flow.rejected()) { <p>Este QR no es válido. Escanea el QR actual del companion.</p> }
           <p>Comprueba que el companion está abierto y ambos dispositivos están en la misma red. Permite el acceso a la red local si el navegador lo solicita.</p>
-          @if (flow.canRetry()) { <button class="cta" (click)="flow.retry()">Retry</button> }
+          @if (flow.canRetry() && !flow.rejected()) { <button class="cta" (click)="flow.retry()">Retry</button> }
           <button class="secondary" (click)="flow.manual()">Manual connection</button>
         } @else {
           <span class="eyebrow">BUSCANDO TU PC</span>

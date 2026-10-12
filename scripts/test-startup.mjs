@@ -55,10 +55,12 @@ try {
   const old=first.addresses.find(entry=>entry.address===first.selectedAddress).endpoint;
   const current=second.addresses.find(entry=>entry.address===second.selectedAddress).endpoint;
   const origin=new URL(second.pairingUrl).origin;
+  // An old token from an allowed origin is closed with 4003 so the phone can say "old QR"; it never becomes a phone session.
   await new Promise((resolve,reject)=>{
     const socket=new WebSocket(old,{origin});
-    socket.once('open',()=>{socket.close();reject(new Error('Old token accepted'));});
-    socket.once('error',error=>/401|403/.test(error.message)?resolve():reject(error));
+    socket.once('message',()=>reject(new Error('Old token received protocol messages')));
+    socket.once('close',code=>code===4003?resolve():reject(new Error('Old token close code '+code)));
+    socket.once('error',error=>/401|403/.test(error.message)?reject(new Error('Expected 4003, got '+error.message)):reject(error));
   });
   await new Promise((resolve,reject)=>{
     const socket=new WebSocket(current,{origin});

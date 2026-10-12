@@ -10,7 +10,17 @@
 
 Payload versión 1: { version: 1, host, port, token }. token conserva la autorización existente y cambia en cada inicio del companion. Es base64url, sin cifrado: no publiques capturas del QR. Se rechazan campos adicionales, versiones desconocidas, hosts distintos de IPv4 privadas RFC1918, puertos no enteros fuera de 1..65535 y claves sin el formato requerido.
 
-El enlace completo es https://fpv.brycofre.com/connect?data=... . Tras conectar, se reemplaza por / en el historial. La conexión sigue limitada a la subred seleccionada, origen permitido y clave temporal. No hay acceso por Internet ni reconexión avanzada.
+El enlace completo es https://fpv.brycofre.com/connect?data=... . Tras conectar, se reemplaza por / en el historial. La conexión sigue limitada a la subred seleccionada, origen permitido y clave temporal. No hay acceso por Internet.
+
+## Protocolo 2 (PC → teléfono)
+
+Compatible en ambos sentidos con versiones anteriores:
+- Al conectar, el companion envía {"type":"hello","protocol":2,"capabilities":["ack","close-codes"]}.
+- Tras recibir estado, responde {"type":"ack","sequence":N} con el último sequence, como mucho cada 500 ms, y repite el último cada segundo si no llega nada nuevo (latido). El teléfono calcula la latencia (RTT) con el instante de envío de ese sequence y la muestra en la píldora; con un companion antiguo, sin hello, muestra "— ms".
+- Con hello recibido, si pasan unos 2 s sin ack, el teléfono da la conexión por perdida aunque TCP no se haya cerrado.
+- Códigos de cierre: 4001 = el PC cerró la sesión (Disconnect phone); 4003 = clave antigua (QR de una sesión anterior) con origen y red válidos: el servidor acepta el upgrade solo para cerrarlo con 4003, porque el navegador no puede leer el 401 de un handshake rechazado. Origen o red no permitidos se siguen rechazando en el handshake.
+- Reconexión automática (solo ante cierre inesperado, nunca tras 4001 ni 4003): reintentos a 0,5, 1, 2 y 4 s, y luego cada 4 s, durante unos 30 s. Los botones vuelven a OFF y la secuencia empieza de nuevo en cada conexión. Si el companion se reinició, su clave cambió: el reintento recibe 4003 y el teléfono pide escanear el QR nuevo.
+- Los teléfonos antiguos no escuchan mensajes del PC y tratan 4001/4003 como un cierre normal. Los companions antiguos no envían nada y el teléfono nuevo sigue funcionando sin latencia ni detección por ack.
 
 ## Publicar y generar
 

@@ -46,9 +46,11 @@ export class ConnectionStatusComponent {
   readonly rate = input(0);
   /** Round-trip time in ms, or null when the companion does not report it. */
   readonly latency = input<number | null>(null);
+  /** Retrying after an unexpected close: shown as connecting, labelled Reconectando…. */
+  readonly reconnecting = input(false);
   readonly disconnect = output<void>();
-  readonly state = computed(() => pillState(this.status(), this.lost()));
-  readonly label = computed(() => ({
+  readonly state = computed(() => this.reconnecting() ? 'connecting' : pillState(this.status(), this.lost()));
+  readonly label = computed(() => this.reconnecting() ? 'Reconectando…' : ({
     idle: 'Sin conexión', connecting: 'Conectando…', connected: 'Conectado', lost: 'Conexión perdida', failed: 'No se pudo conectar'
   })[this.state()]);
 }

@@ -24,12 +24,23 @@ export function isLocalPeer(peer: string, local: LocalAddress): boolean {
   const address = peer.replace(/^::ffff:/, '');
   return isPrivateIpv4(address) && (bits(address) & bits(local.netmask)) === (bits(local.address) & bits(local.netmask));
 }
-export function authorizedConnection(peer: string, origin: string | undefined, requestUrl: string,
-  local: LocalAddress, origins: readonly string[], token: string): boolean {
-  if (!isLocalPeer(peer, local) || !origin || !origins.includes(origin)) return false;
+/**
+ * 'accept': local peer, allowed Origin and the session token.
+ * 'invalid-token': local peer and allowed Origin but an old/wrong token. The server accepts the upgrade only to
+ * close it with 4003, because a browser cannot read the HTTP status of a refused handshake.
+ * 'deny': anything else, refused during the handshake.
+ */
+export type ConnectionDecision = 'accept' | 'invalid-token' | 'deny';
+export function connectionDecision(peer: string, origin: string | undefined, requestUrl: string,
+  local: LocalAddress, origins: readonly string[], token: string): ConnectionDecision {
+  if (!isLocalPeer(peer, local) || !origin || !origins.includes(origin)) return 'deny';
   try {
     const candidate = new URL(requestUrl, 'http://localhost').searchParams.get('token') ?? '';
     const received = Buffer.from(candidate), expected = Buffer.from(token);
-    return received.length === expected.length && timingSafeEqual(received, expected);
-  } catch { return false; }
+    return received.length === expected.length && timingSafeEqual(received, expected) ? 'accept' : 'invalid-token';
+  } catch { return 'deny'; }
+}
+export function authorizedConnection(peer: string, origin: string | undefined, requestUrl: string,
+  local: LocalAddress, origins: readonly string[], token: string): boolean {
+  return connectionDecision(peer, origin, requestUrl, local, origins, token) === 'accept';
 }

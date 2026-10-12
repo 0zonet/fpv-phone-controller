@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { usefulAddresses, isPrivateIpv4, authorizedConnection } from './local-network.js';
+import { usefulAddresses, isPrivateIpv4, authorizedConnection, connectionDecision } from './local-network.js';
 const local = { name: 'Wi-Fi', address: '192.168.2.10', netmask: '255.255.255.0' };
 test('filtra IP pública, loopback y adaptadores virtuales', () => {
   const entry = (address: string) => ({ address, netmask: local.netmask, family: 'IPv4' as const, mac: '00', internal: false, cidr: null });
@@ -14,4 +14,12 @@ test('solo acepta subred local, origen permitido y clave de sesión', () => {
   assert.equal(allow('192.168.2.15', 'https://evil.example', '/?token=secret'), false);
   assert.equal(allow('192.168.2.15', undefined, '/?token=secret'), false);
   assert.equal(allow('192.168.2.15', 'https://pwa.example', '/?token=wrong'), false);
+});
+test('token antiguo con origen y red válidos se distingue para cerrar con 4003', () => {
+  const decide = (peer: string, origin: string | undefined, url: string) => connectionDecision(peer, origin, url, local, ['https://pwa.example'], 'secret');
+  assert.equal(decide('192.168.2.15', 'https://pwa.example', '/?token=secret'), 'accept');
+  assert.equal(decide('192.168.2.15', 'https://pwa.example', '/?token=old'), 'invalid-token');
+  assert.equal(decide('192.168.2.15', 'https://pwa.example', '/'), 'invalid-token');
+  assert.equal(decide('192.168.2.15', 'https://evil.example', '/?token=old'), 'deny');
+  assert.equal(decide('10.0.0.5', 'https://pwa.example', '/?token=secret'), 'deny');
 });

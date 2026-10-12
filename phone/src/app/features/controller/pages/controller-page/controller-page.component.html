@@ -9,7 +9,7 @@
     <span class="mode-chip">MODE 2</span>
     <div class="pill-slot">
       <app-connection-status [status]="transport.status()" [lost]="transport.connectionLost()"
-        [rate]="transport.packetsPerSecond()" (disconnect)="disconnect()" />
+        [rate]="transport.packetsPerSecond()" [latency]="transport.latency()" [reconnecting]="transport.reconnecting()" (disconnect)="disconnect()" />
     </div>
     <nav aria-label="Opciones del mando">
       <button class="icon-button" type="button" aria-label="Valores en vivo" title="Valores en vivo"
@@ -72,12 +72,12 @@
       </div>
       @if (transport.status() === 'connecting') {
         <button class="cta" type="button" (click)="disconnect()"><app-controller-icon class="spin" name="spinner" />Cancelar</button>
-      } @else if (hasPc()) {
+      } @else if (hasPc() && transport.endReason() !== 'rejected') {
         <button class="cta" type="button" (click)="connect()"><app-controller-icon name="connect" />{{ card().cta }}</button>
       } @else {
         <button class="cta" type="button" (click)="openSettings('connection')">Conexión manual</button>
       }
-      @if (hasPc() && transport.status() !== 'connecting') {
+      @if (hasPc() && transport.status() !== 'connecting' && transport.endReason() !== 'rejected') {
         <div class="card-links"><button class="link" type="button" (click)="openSettings('connection')">Conexión manual</button></div>
       }
     </section>

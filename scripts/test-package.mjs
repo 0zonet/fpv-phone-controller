@@ -96,12 +96,21 @@ try {
   assert.match(await page.text(), /manifest.webmanifest/);
   await denied(endpoint, 'https://unauthorized.example');
   const invalid = new URL(endpoint); invalid.searchParams.set('token', 'wrong');
-  await denied(invalid.href, origin);
-  socket = new WebSocket(endpoint, { origin: link.origin }); await waitOpen(socket);
+  await new Promise((resolve, reject) => {
+    const socket = new WebSocket(invalid.href, { origin });
+    socket.once('close', code => code === 4003 ? resolve() : reject(new Error('Wrong token close code ' + code)));
+    socket.once('error', reject);
+  });
+  socket = new WebSocket(endpoint, { origin: link.origin });
+  const fromPc = [];
+  socket.on('message', data => fromPc.push(JSON.parse(data.toString())));
+  await waitOpen(socket);
   socket.send(JSON.stringify({ type: 'controller-state', sequence: 0, timestamp: Date.now(),
     axes: { throttle: .5, yaw: 0, pitch: 0, roll: 0 } }));
   await new Promise(resolve => setTimeout(resolve, 200));
   assert.ok(connected); assert.ok(rejected, 'Rejected pairing must be reported');
+  assert.deepEqual(fromPc[0], { type: 'hello', protocol: 2, capabilities: ['ack', 'close-codes'] });
+  assert.deepEqual(fromPc.find(message => message.type === 'ack'), { type: 'ack', sequence: 0 });
   const live = metrics.at(-1);
   assert.ok(live && metrics.length >= 2, 'metrics lines while connected');
   assert.equal(typeof live.packetsPerSecond, 'number'); assert.equal(live.axes.throttle, .5);

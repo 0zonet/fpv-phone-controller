@@ -15,7 +15,7 @@ The input pipeline remains ControllerState → WebSocket validation → calibrat
 From the root: npm ci, npm run phone. Production: npm --prefix phone run build.
 Vercel imports the root repository; vercel.json builds phone and serves phone/dist/phone/browser. Both / and /connect resolve to index.html.
 
-PairingService validates the payload. PairingFlowService coordinates saving, connecting and navigation. The existing transport manages status and retries; no automatic reconnect loop was added. Version appears in pairing and the controller Debug panel.
+PairingService validates the payload. PairingFlowService coordinates saving, connecting and navigation. The transport manages status, protocol 2 (hello/ack latency, ack-silence loss detection, close codes 4001/4003) and the automatic reconnection after an unexpected close (backoff 0.5/1/2/4 s for ~30 s); see docs/PAIRING.md. Version appears in pairing and the controller Debug panel.
 
 ## Desktop
 
@@ -71,4 +71,4 @@ Publish the new PWA by pushing to GitHub/Vercel, then upload the release install
 
 Follow CLEAN_PC_CHECKLIST.md on another physical PC. Fake-driver tests do not certify the real driver, installer, Chrome permissions or Uncrashed on another machine.
 
-Known limits: unsigned installer/SmartScreen, only Windows 11 x64 targeted, no browser/version compatibility matrix yet, trusted LAN only, local WS is unencrypted, no automatic updates or advanced reconnection, first PWA load needs Internet, network/firewall restrictions can block pairing. The existing failsafe handles packet silence; forcibly killing the PC/process cannot guarantee orderly driver release.
+Known limits: unsigned installer/SmartScreen, only Windows 11 x64 targeted, no browser/version compatibility matrix yet, trusted LAN only, local WS is unencrypted, no automatic updates, first PWA load needs Internet, network/firewall restrictions can block pairing. The existing failsafe handles packet silence; forcibly killing the PC/process cannot guarantee orderly driver release.

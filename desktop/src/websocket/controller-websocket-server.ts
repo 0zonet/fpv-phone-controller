@@ -23,13 +23,21 @@ export interface ControllerServerOptions {
   getControllerMetrics?: () => { updatesPerSecond: number; failsafe: boolean };
   debug?: boolean;
   httpServer?: HttpServer;
-  authorize?: (peer: string, origin: string | undefined, url: string) => boolean;
+  /** true/'accept' admits the phone; 'invalid-token' upgrades only to close with 4003; false/'deny' refuses the handshake. */
+  authorize?: (peer: string, origin: string | undefined, url: string) => boolean | 'accept' | 'invalid-token' | 'deny';
+  /** PC → phone hello/ack (protocol 2). Default true; old phones ignore these messages. */
+  acknowledge?: boolean;
   /** Every WebSocket upgrade attempt, accepted or rejected by `authorize` (PHONE_ATTEMPTED / PAIRING_REJECTED). */
   onConnectionAttempt?: (accepted: boolean) => void;
   /** Received packets per second of the connected phone, once per report interval. */
   onRate?: (packetsPerSecond: number) => void;
 }
-interface Client { readonly address: string; readonly metrics: ControllerMetrics; alive: boolean; }
+interface Client { readonly address: string; readonly metrics: ControllerMetrics; alive: boolean; ackedAt: number; }
+/** PC → phone messages (protocol 2). Clients that predate them never listen to `message`. */
+export const PROTOCOL_HELLO = JSON.stringify({ type: 'hello', protocol: 2, capabilities: ['ack', 'close-codes'] });
+export const CLOSE_PAIRING_REJECTED = 4003;
+const ACK_MIN_INTERVAL_MS = 500, ACK_HEARTBEAT_MS = 1000;
+const rejectedRequests = new WeakSet<IncomingMessage>();
 
 export function createControllerWebSocketServer(options: ControllerServerOptions = {}): WebSocketServer {
   const log = options.log ?? console.log;
@@ -38,18 +46,27 @@ export function createControllerWebSocketServer(options: ControllerServerOptions
       host: options.host ?? defaultConfig.websocketHost }),
     maxPayload: options.maxPayload ?? defaultConfig.maxPayload,
     verifyClient: (info: { req: IncomingMessage; origin: string }) => {
-      const accepted = !options.authorize || options.authorize(info.req.socket.remoteAddress ?? '', info.origin, info.req.url ?? '/');
+      const decision = options.authorize ? options.authorize(info.req.socket.remoteAddress ?? '', info.origin, info.req.url ?? '/') : true;
+      const accepted = decision === true || decision === 'accept';
       try { options.onConnectionAttempt?.(accepted); } catch { /* Diagnostics only. */ }
+      if (decision === 'invalid-token') { rejectedRequests.add(info.req); return true; }
       return accepted;
     }
   });
   const clients = new Map<WebSocket, Client>();
+  const acknowledge = options.acknowledge ?? true;
+  const sendAck = (socket: WebSocket, client: Client, now: number): void => {
+    if (!acknowledge || client.metrics.lastSequence === null || socket.readyState !== WebSocket.OPEN) return;
+    client.ackedAt = now;
+    socket.send(JSON.stringify({ type: 'ack', sequence: client.metrics.lastSequence }));
+  };
   server.on('connection', (socket, request) => {
+    if (rejectedRequests.has(request)) { socket.close(CLOSE_PAIRING_REJECTED, 'Pairing rejected'); return; }
     if (clients.size >= (options.maxPhoneClients ?? defaultConfig.maxPhoneClients)) {
       socket.close(1008, 'Only one active phone is allowed'); return;
     }
     const address = request.socket.remoteAddress ?? 'unknown';
-    const client: Client = { address, metrics: new ControllerMetrics(performance.now()), alive: true };
+    const client: Client = { address, metrics: new ControllerMetrics(performance.now()), alive: true, ackedAt: -Infinity };
     let ended = false;
     const disconnectPhone = (): void => {
       if (ended) return;
@@ -59,13 +76,17 @@ export function createControllerWebSocketServer(options: ControllerServerOptions
     clients.set(socket, client);
     log('Client connected: ' + address);
     options.onPhoneConnected?.();
+    if (acknowledge) socket.send(PROTOCOL_HELLO);
     socket.on('pong', () => { client.alive = true; });
     socket.on('message', (data, binary) => {
       let message: unknown;
       try { message = JSON.parse(data.toString()); }
       catch { socket.close(1008, 'Invalid JSON'); return; }
       if (binary || !isControllerMessage(message)) { socket.close(1008, 'Invalid controller-state'); return; }
-      if (!client.metrics.receive(message, performance.now())) return;
+      const now = performance.now();
+      if (!client.metrics.receive(message, now)) return;
+      // Ack right away (at most every 500 ms) so the phone measures the real round trip.
+      if (now - client.ackedAt >= ACK_MIN_INTERVAL_MS) sendAck(socket, client, now);
       try {
         options.onState?.(message.axes, message.buttons ?? []);
       } catch (error) {
@@ -110,8 +131,13 @@ export function createControllerWebSocketServer(options: ControllerServerOptions
       if (socket.readyState === WebSocket.OPEN) socket.ping();
     }
   }, options.heartbeatMs ?? defaultConfig.heartbeatMs);
-  reporting.unref(); heartbeat.unref();
-  server.on('close', () => { clearInterval(reporting); clearInterval(heartbeat); clients.clear(); });
-  server.on('error', () => { clearInterval(reporting); clearInterval(heartbeat); });
+  // Liveness for the phone when nothing new arrived: repeats the last sequence (the phone ignores it for RTT).
+  const acks = setInterval(() => {
+    const now = performance.now();
+    for (const [socket, client] of clients) if (now - client.ackedAt >= ACK_HEARTBEAT_MS) sendAck(socket, client, now);
+  }, ACK_HEARTBEAT_MS / 2);
+  reporting.unref(); heartbeat.unref(); acks.unref();
+  server.on('close', () => { clearInterval(reporting); clearInterval(heartbeat); clearInterval(acks); clients.clear(); });
+  server.on('error', () => { clearInterval(reporting); clearInterval(heartbeat); clearInterval(acks); });
   return server;
 }
