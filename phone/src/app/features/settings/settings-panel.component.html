@@ -1,0 +1,136 @@
+<div class="settings" role="dialog" aria-modal="true" aria-label="Ajustes">
+  <div class="glow" aria-hidden="true"></div>
+  <nav aria-label="Secciones de ajustes">
+    <button class="back" type="button" (click)="close.emit()"><app-controller-icon name="back" />Volver a volar</button>
+    @for (item of sections; track item.id) {
+      <button class="nav" type="button" [attr.aria-current]="section() === item.id ? 'page' : null" (click)="section.set(item.id); testing.set(false)">{{ item.name }}</button>
+    }
+    <span class="spacer"></span>
+    <span class="version">v{{ version }}</span>
+  </nav>
+
+  <main>
+    @switch (section()) {
+      @case ('sticks') {
+        <div class="title"><h1>Sticks</h1><span class="eyebrow">MODE 2</span></div>
+        @if (testing()) {
+          <section class="card test">
+            <div class="row-head"><h2>Probar sticks</h2><button class="chip" type="button" (click)="testing.set(false)">Listo</button></div>
+            <p class="hint">Mueve los sticks: las barras muestran lo que recibe el PC, con tu zona muerta e inversión aplicadas.</p>
+            <div class="test-body">
+              <app-virtual-stick class="mini" tone="left" label="Yaw y throttle" [xValue]="controller.leftStick().x" [yValue]="controller.leftStick().y"
+                [xReturnToCenter]="true" [yReturnToCenter]="false" [invertY]="true" (valueChange)="controller.setLeftStick($event)" />
+            <dl class="bars">
+              @for (axis of sent(); track axis.name) {
+                <div>
+                  <dt>{{ axis.name }}</dt>
+                  <dd class="track" [class.centred]="axis.centred">
+                    <span [style.left.%]="axis.left" [style.width.%]="axis.width"></span>
+                  </dd>
+                  <dd class="value">{{ axis.value }}</dd>
+                </div>
+              }
+            </dl>
+              <app-virtual-stick class="mini" tone="right" label="Roll y pitch" [xValue]="controller.rightStick().x" [yValue]="controller.rightStick().y"
+                [xReturnToCenter]="true" [yReturnToCenter]="true" [invertY]="true" (valueChange)="controller.setRightStick($event)" />
+            </div>
+            <p class="hint">Para ver lo que recibe vJoy, en el PC abre Advanced → Test joystick (joy.cpl). El PC aplica además su propia zona muerta del 3 % y la inversión de pitch.</p>
+          </section>
+        } @else {
+          <div class="grid">
+            <section class="card">
+              <div class="row-head">
+                <label for="deadzone">Zona muerta</label>
+                <span><span class="big">{{ deadzonePercent() }}</span><span class="unit">%</span></span>
+              </div>
+              <input id="deadzone" type="range" min="0" [max]="maxDeadzone" step="1" [value]="deadzonePercent()"
+                [style.--fill]="(deadzonePercent() / maxDeadzone * 100) + '%'" (input)="deadzoneInput($any($event.target).value)" />
+              <p class="hint">Adicional a la del PC. Ignora movimientos mínimos cerca del centro en yaw, roll y pitch.</p>
+            </section>
+            <section class="card">
+              <h2>Invertir ejes</h2>
+              <div class="axes" role="group" aria-label="Invertir ejes">
+                @for (axis of axes; track axis) {
+                  <button type="button" class="toggle" [attr.aria-pressed]="settings().invert[axis]" (click)="service.toggleInvert(axis)">{{ axisLabels[axis] }}</button>
+                }
+              </div>
+              <p class="hint">Se suma a la inversión que ya aplica el PC (pitch). Todo apagado = comportamiento original.</p>
+              @if (settings().invert.throttle) { <p class="warn">Con THR invertido, el stick abajo envía 100 %.</p> }
+            </section>
+            <section class="card inline">
+              <div class="grow"><h2>Probar sticks</h2><p class="hint">Valores que se envían al PC, en vivo.</p></div>
+              <button class="chip" type="button" (click)="testing.set(true)">Probar</button>
+            </section>
+            <section class="card inline">
+              <label class="grow" for="live-values"><h2>Valores en vivo</h2><span class="hint">Muestra los ejes bajo cada stick.</span></label>
+              <button id="live-values" class="switch" type="button" role="switch" [attr.aria-checked]="settings().liveValues"
+                aria-label="Valores en vivo" (click)="service.setLiveValues(!settings().liveValues)"><span></span></button>
+            </section>
+          </div>
+          <p class="footer"><app-controller-icon name="info" />Yaw, Roll y Pitch vuelven al centro al soltar. Throttle mantiene su última posición.</p>
+        }
+      }
+      @case ('buttons') {
+        <div class="title"><h1>Botones</h1><span class="eyebrow">VJOY 1–8</span></div>
+        <div class="button-list">
+          @for (button of settings().buttons; track button.index) {
+            <section class="card button-row">
+              <span class="index">{{ button.index + 1 }}</span>
+              <input type="text" [attr.aria-label]="'Etiqueta del botón ' + (button.index + 1)" [maxLength]="maxLabel" autocapitalize="characters"
+                spellcheck="false" [value]="button.label" (change)="labelInput(button.index, $any($event.target).value); $any($event.target).value = settings().buttons[button.index].label" />
+              <div class="segmented" role="group" [attr.aria-label]="'Modo del botón ' + (button.index + 1)">
+                <button type="button" [attr.aria-pressed]="button.mode === 'toggle'" (click)="setMode(button.index, 'toggle')">Toggle</button>
+                <button type="button" [attr.aria-pressed]="button.mode === 'momentary'" (click)="setMode(button.index, 'momentary')">Mantener</button>
+              </div>
+            </section>
+          }
+        </div>
+        <p class="footer"><app-controller-icon name="info" />Los botones 1–4 están en la pantalla de vuelo; 5–8, en «4 botones más». El botón 1 se muestra en rojo cuando está activo. Los cambios de modo sueltan los botones afectados.</p>
+      }
+      @case ('connection') {
+        <div class="title"><h1>Conexión</h1></div>
+        <section class="card">
+          <div class="row-head"><h2>Estado</h2><app-connection-status [status]="transport.status()" [lost]="transport.connectionLost()" [rate]="transport.packetsPerSecond()" (disconnect)="disconnect()" /></div>
+          @if (endpointPreview()) { <p class="hint mono">PC emparejado: {{ endpointPreview() }}</p> }
+          @if (transport.status() === 'connected' || transport.status() === 'connecting') {
+            <button class="chip" type="button" (click)="disconnect()">{{ transport.status() === 'connected' ? 'Desconectar' : 'Cancelar' }}</button>
+          }
+        </section>
+        @if (transport.status() !== 'connected' && transport.status() !== 'connecting') {
+          <section class="card">
+            <form (submit)="$event.preventDefault(); connectManual()">
+              <label for="pc-address"><h2>Conexión manual</h2></label>
+              <div class="connection-row">
+                <input #pcAddress id="pc-address" type="url" required autocomplete="off" autocapitalize="off" spellcheck="false"
+                  placeholder="ws://IP del PC:8080" [value]="manualAddress()"
+                  (input)="updateManualAddress(pcAddress.value, pcAddress)" (paste)="pasteManualAddress($event, pcAddress)" />
+                <button class="primary" type="submit">Conectar</button>
+              </div>
+              @if (manualDetails(); as details) { <p class="hint">Host: {{ details.host }} · Puerto: {{ details.port }}</p> }
+              <p class="hint">Copia el endpoint en la app de Windows (Advanced → Copy endpoint). Si pegas el endpoint completo, la clave se guarda internamente y no se muestra.</p>
+              @if (manualError()) { <p class="error" role="alert">{{ manualError() }}</p> }
+            </form>
+          </section>
+        }
+        <p class="footer"><app-controller-icon name="info" />Lo más fácil es escanear el QR de la app de Windows con la cámara del teléfono.</p>
+      }
+      @case ('advanced') {
+        <div class="title"><h1>Avanzado</h1></div>
+        <section class="card">
+          <h2>Diagnóstico</h2>
+          <dl class="diagnostics">
+            <div><dt>Paquetes/s</dt><dd>{{ transport.packetsPerSecond() }}</dd></div>
+            <div><dt>SEQ</dt><dd>{{ transport.lastSequence() ?? '—' }}</dd></div>
+            <div><dt>Modo</dt><dd>{{ pwa.displayMode() }}</dd></div>
+            <div><dt>Service worker</dt><dd>{{ pwa.workerActive() ? 'Activo' : 'Pendiente' }}</dd></div>
+          </dl>
+        </section>
+        <section class="card inline">
+          <div class="grow"><h2>Restablecer ajustes</h2><p class="hint">Zona muerta, inversión, valores en vivo y botones vuelven a los valores de fábrica. No borra el PC emparejado.</p></div>
+          <button class="chip" type="button" (click)="resetAll()">Restablecer</button>
+        </section>
+        <p class="footer mono">FPV Phone Controller v{{ version }}</p>
+      }
+    }
+  </main>
+</div>

@@ -2,6 +2,7 @@ import { effect, inject, Injectable, OnDestroy, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PairingService } from './pairing.service';
 import { ControllerTransportService } from './controller-transport.service';
+import { PairedEndpointService } from './paired-endpoint.service';
 
 @Injectable()
 export class PairingFlowService implements OnDestroy {
@@ -9,6 +10,7 @@ export class PairingFlowService implements OnDestroy {
   private readonly transport = inject(ControllerTransportService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly paired = inject(PairedEndpointService);
   private endpoint = '';
   private completed = false;
   private attempted = false;
@@ -37,7 +39,7 @@ export class PairingFlowService implements OnDestroy {
     if (!this.endpoint) return;
     this.attempted = true;
     this.failed.set(false);
-    try { localStorage.setItem('fpv-controller-address', this.endpoint); } catch { /* Storage may be disabled. */ }
+    this.paired.save(this.endpoint);
     this.transport.connect(this.endpoint);
   }
   manual(): void { this.transport.disconnect(); void this.router.navigateByUrl('/', { replaceUrl: true }); }

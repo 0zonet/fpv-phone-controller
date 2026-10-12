@@ -13,9 +13,9 @@
     </div>
     <nav aria-label="Opciones del mando">
       <button class="icon-button" type="button" aria-label="Valores en vivo" title="Valores en vivo"
-        [attr.aria-pressed]="liveValues()" (click)="liveValues.set(!liveValues())"><app-controller-icon name="live" /></button>
+        [attr.aria-pressed]="liveValues()" (click)="settingsService.setLiveValues(!liveValues())"><app-controller-icon name="live" /></button>
       <button class="icon-button" type="button" aria-label="Ajustes" title="Ajustes"
-        [attr.aria-expanded]="settingsOpen()" aria-controls="settings-sheet" (click)="settingsOpen.set(!settingsOpen())"><app-controller-icon name="settings" /></button>
+        [attr.aria-expanded]="settingsOpen()" aria-controls="settings-sheet" (click)="openSettings()"><app-controller-icon name="settings" /></button>
       <button class="icon-button" type="button" [attr.aria-label]="fullscreen() ? 'Salir de pantalla completa' : 'Pantalla completa'"
         [title]="fullscreen() ? 'Salir de pantalla completa' : 'Pantalla completa'" (click)="toggleFullscreen()">
         <app-controller-icon [name]="fullscreen() ? 'collapse' : 'expand'" /></button>
@@ -24,7 +24,7 @@
 
   <section class="deck" aria-label="Controles de vuelo">
     <div class="throttle-bar" role="meter" aria-label="Throttle" aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="throttlePercent()">
-      <span [style.transform]="'scaleY(' + controller.throttle() + ')'"></span>
+      <span [style.transform]="'scaleY(' + throttle() + ')'"></span>
     </div>
 
     <article class="stick-col">
@@ -38,11 +38,16 @@
     </article>
 
     <section class="buttons" aria-label="Botones del mando">
-      @for (button of buttonConfigs; track button.index) {
-        <app-virtual-button [label]="button.label" [mode]="button.mode" [kind]="button.index === 0 ? 'arm' : 'default'"
-          [pressed]="controller.buttons()[button.index]" [disabled]="!connected()"
-          (pressedChange)="controller.setButton(button.index, $event)" />
-      }
+      <div class="button-grid">
+        @for (button of mainButtons(); track button.index) {
+          <app-virtual-button [label]="button.label" [mode]="button.mode" [kind]="button.index === 0 ? 'arm' : 'default'"
+            [pressed]="controller.buttons()[button.index]" [disabled]="!connected()"
+            (pressedChange)="controller.setButton(button.index, $event)" />
+        }
+      </div>
+      <button class="more" type="button" aria-controls="more-buttons" [attr.aria-expanded]="moreOpen()" (click)="moreOpen.set(true)">
+        <app-controller-icon name="plus" />4 botones más @if (extraActive()) { <span class="badge">{{ extraActive() }} ON</span> }
+      </button>
     </section>
 
     <article class="stick-col">
@@ -67,50 +72,35 @@
       </div>
       @if (transport.status() === 'connecting') {
         <button class="cta" type="button" (click)="disconnect()"><app-controller-icon class="spin" name="spinner" />Cancelar</button>
-      } @else if (paired()) {
+      } @else if (hasPc()) {
         <button class="cta" type="button" (click)="connect()"><app-controller-icon name="connect" />{{ card().cta }}</button>
       } @else {
-        <button class="cta" type="button" (click)="settingsOpen.set(true)">Conexión manual</button>
+        <button class="cta" type="button" (click)="openSettings('connection')">Conexión manual</button>
       }
-      @if (paired() && transport.status() !== 'connecting') {
-        <div class="card-links"><button class="link" type="button" (click)="settingsOpen.set(true)">Conexión manual</button></div>
+      @if (hasPc() && transport.status() !== 'connecting') {
+        <div class="card-links"><button class="link" type="button" (click)="openSettings('connection')">Conexión manual</button></div>
       }
     </section>
   }
 
-  @if (settingsOpen()) {
-    <div class="sheet-backdrop" (click)="settingsOpen.set(false)"></div>
-    <section id="settings-sheet" class="card sheet" role="dialog" aria-label="Ajustes">
+  @if (moreOpen()) {
+    <div class="sheet-backdrop" (click)="moreOpen.set(false)"></div>
+    <section id="more-buttons" class="more-sheet" role="dialog" aria-label="Botones 5 a 8">
       <div class="sheet-head">
-        <h2>Ajustes</h2>
-        <button class="icon-button" type="button" aria-label="Cerrar ajustes" (click)="settingsOpen.set(false)"><app-controller-icon name="close" /></button>
+        <span class="eyebrow">BOTONES 5–8</span>
+        <span class="sheet-actions">
+          <button class="link" type="button" (click)="openSettings('buttons')">Editar</button>
+          <button class="icon-button" type="button" aria-label="Cerrar" (click)="moreOpen.set(false)"><app-controller-icon name="close" /></button>
+        </span>
       </div>
-      <h3 class="eyebrow">CONEXIÓN</h3>
-      @if (transport.status() === 'connected' || transport.status() === 'connecting') {
-        <button class="secondary" type="button" (click)="disconnect()">{{ transport.status() === 'connected' ? 'Desconectar' : 'Cancelar' }}</button>
-      } @else {
-        <form (submit)="$event.preventDefault(); connectManual()">
-          <label for="pc-address">Endpoint manual</label>
-          <div class="connection-row">
-            <input #pcAddress id="pc-address" type="url" required autocomplete="off" autocapitalize="off" spellcheck="false"
-              placeholder="ws://IP del PC:8080" [value]="manualAddress()"
-              (input)="updateManualAddress(pcAddress.value, pcAddress)" (paste)="pasteManualAddress($event, pcAddress)" />
-            <button class="primary" type="submit">Conectar</button>
-          </div>
-          @if (manualDetails(); as details) { <p class="hint">Host: {{ details.host }} · Puerto: {{ details.port }}</p> }
-          <p class="hint">Si pegas el endpoint completo del companion, la clave se guarda internamente y no se muestra.</p>
-          @if (manualError()) { <p class="error-message" role="alert">{{ manualError() }}</p> }
-        </form>
-      }
-      <h3 class="eyebrow">DIAGNÓSTICO</h3>
-      <dl class="diagnostics">
-        <div><dt>Paquetes/s</dt><dd>{{ transport.packetsPerSecond() }}</dd></div>
-        <div><dt>SEQ</dt><dd>{{ transport.lastSequence() ?? '—' }}</dd></div>
-        <div><dt>Modo</dt><dd>{{ pwa.displayMode() }}</dd></div>
-        <div><dt>Service worker</dt><dd>{{ pwa.workerActive() ? 'Activo' : 'Pendiente' }}</dd></div>
-      </dl>
-      <p class="version">v{{ version }}</p>
+      <div class="more-grid">
+        @for (button of extraButtons(); track button.index) {
+          <app-virtual-button [label]="button.label" [mode]="button.mode" [pressed]="controller.buttons()[button.index]" [disabled]="!connected()"
+            (pressedChange)="controller.setButton(button.index, $event)" />
+        }
+      </div>
     </section>
   }
+  @if (settingsOpen()) { <app-settings-panel [initial]="settingsSection()" (close)="settingsOpen.set(false)" /> }
   @if (fullscreenMessage()) { <p class="notice" role="status">{{ fullscreenMessage() }}</p> }
 </main>

@@ -8,9 +8,10 @@ Los cuatro ejes, su calibración y los sticks conservan su comportamiento. El mi
 | RESET | 1 | 2 | Momentary |
 | AUX 1 | 2 | 3 | Toggle |
 | AUX 2 | 3 | 4 | Toggle |
-| Sin control visible | 4..7 | 5..8 | Disponibles en el modelo |
+| AUX 3 / AUX 4 | 4..5 | 5..6 | Toggle (hoja «4 botones más») |
+| BTN 7 / BTN 8 | 6..7 | 7..8 | Momentary (hoja «4 botones más») |
 
-Los nombres son etiquetas configurables, no acciones impuestas al simulador. Configuración inicial: phone/src/app/core/models/controller-button.model.ts. No hay editor de mapping ni macros.
+Los nombres son etiquetas configurables, no acciones impuestas al simulador. Valores de fábrica: phone/src/app/core/models/controller-button.model.ts. En la PWA, **Ajustes → Botones** permite cambiar la etiqueta (hasta 8 caracteres) y el modo (Toggle o Mantener) de los ocho; se guardan en el teléfono (localStorage, clave fpv-settings-v1). Cambiar el modo suelta ese botón. El botón 1 se pinta en rojo mientras está activo (ARMED si se llama ARM). No hay editor de mapping ni macros.
 
 ## Probar en Windows
 
@@ -20,7 +21,7 @@ Los nombres son etiquetas configurables, no acciones impuestas al simulador. Con
 4. ARM enciende el botón 1 hasta otro tap. RESET enciende el 2 mientras lo mantienes presionado. AUX 1/2 alternan los botones 3/4.
 5. Toca RESET a la vez que mueves ambos sticks: el botón y los ejes deben responder independientemente.
 6. Deja los toggle activos y desconecta el teléfono. Todos los botones deben apagarse inmediatamente al cerrar la conexión o después del failsafe de 250 ms sin paquetes. Reconecta: los toggle del teléfono vuelven a OFF. Cambiar de aplicación o esconder la PWA también limpia los botones.
-7. Los botones 5..8 quedan liberados y preparados en el dispositivo, pero esta UI solo presenta cuatro botones. Para comprobar los ocho sin cambiar la configuración por defecto, las pruebas usan un escritor nativo fake con cada índice; no se afirma verificación física de los ocho.
+7. Toca «4 botones más»: la hoja muestra los botones 5..8 (AUX 3, AUX 4, BTN 7, BTN 8). Comprueba en joy.cpl que encienden los botones 5..8. Cerrar la hoja suelta los botones momentáneos; los toggle conservan su estado y el botón «4 botones más» indica cuántos están en ON.
 
 ## FPV SkyDive
 

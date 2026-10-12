@@ -48,7 +48,11 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--fpv-ink); o
 .throttle small { font-family: var(--fpv-font-mono); font-size: 11px; font-weight: 400; color: var(--fpv-muted); margin-left: 3px; }
 .pair { font-family: var(--fpv-font-mono); font-size: 11px; color: var(--fpv-body); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .readout { margin: 8px 0 0; height: 14px; font-family: var(--fpv-font-mono); font-size: 10px; color: var(--fpv-muted); font-variant-numeric: tabular-nums; }
-.buttons { --button-height: clamp(48px, 14dvh, 60px); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.buttons { --button-height: clamp(48px, 14dvh, 60px); display: flex; flex-direction: column; gap: 10px; }
+.button-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.more { height: 40px; border-radius: var(--fpv-radius-pill); display: flex; align-items: center; justify-content: center; gap: 8px; background: transparent;
+  border: 1px dashed rgba(255, 255, 255, 0.14); color: var(--fpv-muted); font-size: 13px; font-weight: 600; --icon-size: 14px; }
+.badge { font-family: var(--fpv-font-mono); font-size: 9px; letter-spacing: .06em; padding: 2px 6px; border-radius: var(--fpv-radius-pill); background: rgba(139, 124, 255, 0.2); color: var(--fpv-ink); }
 .dots { height: calc(var(--stick-size) - 8px); display: flex; flex-direction: column; justify-content: space-between; align-items: center; }
 .dots span { width: 6px; height: 6px; border-radius: 50%; background: rgba(255, 255, 255, 0.18); }
 .dots .mid { background: rgba(255, 255, 255, 0.35); }
@@ -72,24 +76,15 @@ main.offline .stick-head, main.offline .readout { opacity: .6; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .spin { animation: spin 1s linear infinite; }
 
-/* Settings sheet */
-.sheet-backdrop { position: absolute; inset: 0; z-index: 2; background: rgba(13, 13, 18, 0.7); }
-.sheet { left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(460px, calc(100vw - 32px)); max-height: calc(100dvh - 24px); overflow-y: auto;
-  background: #16161E; padding: 18px 22px; display: flex; flex-direction: column; gap: 10px; user-select: text; -webkit-user-select: text; }
-.sheet-head { display: flex; align-items: center; justify-content: space-between; }
-.sheet h3 { margin-top: 6px; }
-label { display: block; margin-bottom: 8px; font-size: 13px; color: var(--fpv-body); font-weight: 600; }
-.connection-row { display: flex; gap: 8px; }
-input { min-width: 0; flex: 1; width: 100%; box-sizing: border-box; height: 44px; padding: 0 14px; border: 1px solid var(--fpv-chip-edge);
-  border-radius: 14px; background: rgba(255, 255, 255, 0.04); color: var(--fpv-ink); font: inherit; font-size: 16px; }
-.primary { height: 44px; padding: 0 18px; border: 0; border-radius: var(--fpv-radius-pill); background: var(--fpv-ink); color: var(--fpv-on-solid); font-weight: 700; }
-.secondary { height: 44px; padding: 0 18px; border-radius: var(--fpv-radius-pill); background: var(--fpv-chip); border: 1px solid var(--fpv-chip-edge); color: var(--fpv-ink); font-weight: 600; align-self: flex-start; }
-.hint { margin: 8px 0 0; font-size: 12px; line-height: 1.5; color: var(--fpv-muted); }
-.diagnostics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0; }
-.diagnostics dt { font-size: 11px; color: var(--fpv-muted); }
-.diagnostics dd { margin: 2px 0 0; font-family: var(--fpv-font-mono); font-size: 12px; overflow-wrap: anywhere; }
-.version { margin: 4px 0 0; font-family: var(--fpv-font-mono); font-size: 10px; color: var(--fpv-muted); }
-.error-message, .notice { color: var(--fpv-error-text); font-size: 13px; line-height: 1.5; margin: 10px 0 0; overflow-wrap: anywhere; }
+/* Buttons 5–8 sheet: solid, no blur (it opens while flying). */
+.sheet-backdrop { position: absolute; inset: 0; z-index: 2; background: rgba(13, 13, 18, 0.55); }
+.more-sheet { position: absolute; z-index: 3; left: 50%; bottom: calc(10px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+  width: min(560px, calc(100vw - 32px)); box-sizing: border-box; padding: 12px 16px 16px; border-radius: 24px;
+  background: #16161E; border: 1px solid var(--fpv-edge); box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.45); --button-height: 60px; }
+.sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.sheet-actions { display: flex; align-items: center; gap: 6px; }
+.more-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.notice { color: var(--fpv-error-text); font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
 .notice { position: absolute; z-index: 3; left: 50%; bottom: calc(10px + env(safe-area-inset-bottom)); transform: translateX(-50%); margin: 0;
   width: max-content; max-width: calc(100vw - 32px); padding: 8px 14px; border-radius: var(--fpv-radius-pill); background: var(--fpv-pill-solid); }
 
@@ -102,12 +97,14 @@ input { min-width: 0; flex: 1; width: 100%; box-sizing: border-box; height: 44px
   main { height: auto; min-height: 100dvh; overflow: visible; --stick-size: min(68vw, 30dvh, 300px); }
   .deck { grid-template-columns: 1fr; row-gap: 16px; padding-bottom: 24px; }
   .throttle-bar, .dots { display: none; }
-  .buttons { width: min(100%, 360px); margin: auto; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .buttons { width: min(100%, 360px); margin: auto; }
+  .button-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .more-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .connection-card { width: min(320px, calc(100vw - 32px)); }
   .brand span, .mode-chip { display: none; }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .icon-button, .link, .secondary { transition: background-color .15s ease, border-color .15s ease, transform .1s ease; }
+  .icon-button, .link, .more { transition: background-color .15s ease, border-color .15s ease, transform .1s ease; }
   .cta:active, .icon-button:active { transform: scale(.97); }
 }
 @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
