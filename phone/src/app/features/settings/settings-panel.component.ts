@@ -28,6 +28,8 @@ export type SettingsSection = 'sticks' | 'buttons' | 'connection' | 'advanced';
 export class SettingsPanelComponent implements OnInit {
   readonly initial = input<SettingsSection>('sticks');
   readonly close = output<void>();
+  /** Opens the in-app QR scanner (handled by the flight screen). */
+  readonly scan = output<void>();
   readonly service = inject(SettingsService);
   readonly controller = inject(ControllerStateService);
   readonly transport = inject(ControllerTransportService);

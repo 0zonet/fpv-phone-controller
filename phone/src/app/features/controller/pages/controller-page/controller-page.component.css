@@ -72,6 +72,8 @@ main.offline .stick-head, main.offline .readout { opacity: .6; }
 .cta { height: 52px; border: 0; border-radius: var(--fpv-radius-pill); background: var(--fpv-ink); color: var(--fpv-on-solid);
   font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px; }
 .card-links { display: flex; justify-content: center; gap: 8px; }
+.card-links .pill { height: 40px; padding: 0 14px; border-radius: var(--fpv-radius-pill); background: var(--fpv-chip); border: 1px solid var(--fpv-chip-edge);
+  color: var(--fpv-body); font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; --icon-size: 14px; }
 .link { height: 40px; padding: 0 14px; border-radius: var(--fpv-radius-pill); background: transparent; border: 0; color: var(--fpv-muted); font-size: 13px; font-weight: 600; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .spin { animation: spin 1s linear infinite; }

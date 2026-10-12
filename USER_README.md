@@ -15,6 +15,8 @@ The Setup includes the virtual joystick driver (vJoy 2.2.2.0, signed by Brunner)
 3. Scan the QR with your phone camera and open the link in Chrome.
 4. Allow local-network access if requested. The controller opens automatically and the Phone chip shows Connected, with live mini sticks and packets per second.
 
+If the controller page is already open (for example, installed as an app), tap Escanear QR to scan from inside it. The in-app scanner needs the published HTTPS page; in the local preview (http://IP:port) the browser blocks the camera, so use the phone camera app or Conexión manual instead.
+
 The public PWA is https://fpv.brycofre.com. You need Internet access to open it initially. You can install it from Chrome's menu.
 
 New QR restarts the connection and invalidates the previous link. Scan the new QR. Copy link is an alternative. Disconnect phone ends the session from the PC. Advanced contains the PC network selector, the manual WebSocket endpoint (its key is hidden; the copy button copies it complete), the vJoy device, Test joystick, Help and the logs folder.

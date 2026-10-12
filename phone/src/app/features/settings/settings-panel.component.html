@@ -112,7 +112,11 @@
             </form>
           </section>
         }
-        <p class="footer"><app-controller-icon name="info" />Lo más fácil es escanear el QR de la app de Windows con la cámara del teléfono.</p>
+        <section class="card inline">
+          <div class="grow"><h2>Escanear QR</h2><p class="hint">Empareja con la cámara sin salir de la app. Solo funciona en la PWA publicada (https://), no en la vista previa local.</p></div>
+          <button class="chip" type="button" (click)="scan.emit()">Escanear</button>
+        </section>
+        <p class="footer"><app-controller-icon name="info" />También puedes escanear el QR de la app de Windows con la cámara del teléfono.</p>
       }
       @case ('advanced') {
         <div class="title"><h1>Avanzado</h1></div>

@@ -75,10 +75,15 @@
       } @else if (hasPc() && transport.endReason() !== 'rejected') {
         <button class="cta" type="button" (click)="connect()"><app-controller-icon name="connect" />{{ card().cta }}</button>
       } @else {
-        <button class="cta" type="button" (click)="openSettings('connection')">Conexión manual</button>
+        <button class="cta" type="button" (click)="scannerOpen.set(true)"><app-controller-icon name="scan" />Escanear QR</button>
       }
-      @if (hasPc() && transport.status() !== 'connecting' && transport.endReason() !== 'rejected') {
-        <div class="card-links"><button class="link" type="button" (click)="openSettings('connection')">Conexión manual</button></div>
+      @if (transport.status() !== 'connecting') {
+        <div class="card-links">
+          @if (hasPc() && transport.endReason() !== 'rejected') {
+            <button class="pill" type="button" (click)="scannerOpen.set(true)"><app-controller-icon name="scan" />Escanear QR</button>
+          }
+          <button class="link" type="button" (click)="openSettings('connection')">Conexión manual</button>
+        </div>
       }
     </section>
   }
@@ -101,6 +106,9 @@
       </div>
     </section>
   }
-  @if (settingsOpen()) { <app-settings-panel [initial]="settingsSection()" (close)="settingsOpen.set(false)" /> }
+  @if (settingsOpen()) { <app-settings-panel [initial]="settingsSection()" (close)="settingsOpen.set(false)" (scan)="settingsOpen.set(false); scannerOpen.set(true)" /> }
+  @if (scannerOpen()) {
+    <app-qr-scanner (close)="scannerOpen.set(false)" (paired)="scannerOpen.set(false)" (manual)="scannerOpen.set(false); openSettings('connection')" />
+  }
   @if (fullscreenMessage()) { <p class="notice" role="status">{{ fullscreenMessage() }}</p> }
 </main>

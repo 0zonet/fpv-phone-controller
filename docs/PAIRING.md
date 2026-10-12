@@ -12,6 +12,10 @@ Payload versión 1: { version: 1, host, port, token }. token conserva la autoriz
 
 El enlace completo es https://fpv.brycofre.com/connect?data=... . Tras conectar, se reemplaza por / en el historial. La conexión sigue limitada a la subred seleccionada, origen permitido y clave temporal. No hay acceso por Internet.
 
+## Escáner QR en la PWA
+
+Escanear QR (tarjeta de conexión y Ajustes → Conexión) abre la cámara trasera con getUserMedia. Usa BarcodeDetector si el navegador lo ofrece con formato qr_code (Chrome Android) y, si no, carga jsQR bajo demanda (chunk aparte, en caché del service worker) y analiza fotogramas reducidos a 640 px cada ~180 ms. El texto leído pasa por PairingService.parsePairingUrl: si es un enlace de pairing válido se guarda y se conecta; si no, avisa de que el QR no es de FPV Phone Controller y sigue escaneando. La cámara exige contexto seguro: funciona en https://fpv.brycofre.com (y localhost), pero no en la vista previa local http://IP:puerto, donde se muestra un aviso y se ofrece Conexión manual.
+
 ## Protocolo 2 (PC → teléfono)
 
 Compatible en ambos sentidos con versiones anteriores:

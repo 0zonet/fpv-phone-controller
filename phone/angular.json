@@ -16,6 +16,7 @@
               "src/styles.css"
             ],
             "outputPath": "dist/phone",
+            "allowedCommonJsDependencies": ["jsqr"],
             "assets": [
               {
                 "glob": "**/*",

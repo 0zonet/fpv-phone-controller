@@ -17,6 +17,7 @@ Auditoría: 2026-10-12, versión `0.4.0-beta.2`. Se generó a partir de lo que *
 | @angular/service-worker | 20.3.33 | MIT | https://github.com/angular/angular |
 | rxjs | 7.8.2 | Apache-2.0 | https://github.com/reactivex/rxjs |
 | tslib | 2.8.1 | 0BSD | https://github.com/Microsoft/tslib |
+| jsQR (fallback del escáner QR, chunk cargado bajo demanda) | 1.4.0 | Apache-2.0 | https://github.com/cozmo/jsQR |
 | Urbanist (variable, subset latin, vía @fontsource-variable/urbanist 5.3.0) | 5.3.0 | OFL-1.1 | https://github.com/coreyhu/Urbanist |
 | Doto (variable, subset latin, vía @fontsource-variable/doto 5.3.0) | 5.3.0 | OFL-1.1 | https://github.com/oliverlalan/Doto |
 | Martian Mono (variable, subset latin, vía @fontsource-variable/martian-mono 5.3.0) | 5.3.0 | OFL-1.1 | https://github.com/evilmartians/mono |
@@ -68,11 +69,10 @@ El `license.txt` incluido con Inno Setup 7.1.0 permite expresamente el uso comer
 ## Pendiente en fases posteriores
 
 Se añadirán a este archivo cuando entren en el producto:
-- **jsQR** (fase 7, fallback del escáner QR): Apache-2.0. Hoy solo es devDependency de `scripts/test-package.mjs` y no se distribuye.
 
 ## Herramientas de build y test (no se distribuyen)
 
-Angular CLI y `@angular/build`, esbuild, TypeScript, tsx, `@types/*`, jsQR y el compilador de Inno Setup solo se usan para construir o probar. En todo el árbol de `node_modules/` y `phone/node_modules/` (unos 420 paquetes) hay licencias MIT, ISC, Apache-2.0, BSD-2/3, BlueOak-1.0.0, 0BSD y CC0-1.0, además de `caniuse-lite` (CC-BY-4.0, datos de navegadores) y `spdx-exceptions` (CC-BY-3.0). Ninguna es GPL, LGPL ni AGPL, y ninguna llega al producto final.
+Angular CLI y `@angular/build`, esbuild, TypeScript, tsx, `@types/*` y el compilador de Inno Setup solo se usan para construir o probar (jsQR, además de en la PWA, se usa en `scripts/test-package.mjs`). En todo el árbol de `node_modules/` y `phone/node_modules/` (unos 420 paquetes) hay licencias MIT, ISC, Apache-2.0, BSD-2/3, BlueOak-1.0.0, 0BSD y CC0-1.0, además de `caniuse-lite` (CC-BY-4.0, datos de navegadores) y `spdx-exceptions` (CC-BY-3.0). Ninguna es GPL, LGPL ni AGPL, y ninguna llega al producto final.
 
 ## Cómo repetir la auditoría
 
