@@ -6,6 +6,13 @@ import { TRANSPORT_CLOCK } from './transport-runtime';
 import { SettingsService } from './settings.service';
 import { applyStickSettings } from '../models/settings.model';
 
+/** Every connection and reconnection starts with all buttons OFF; leaving the connected state releases them too. */
+export function syncTransmission(connected: boolean, loop: Pick<ControllerTransmissionLoop, 'start' | 'stop'>,
+  state: Pick<ControllerStateService, 'resetButtons'>): void {
+  if (connected) { state.resetButtons(); loop.start(); }
+  else { loop.stop(); state.resetButtons(); }
+}
+
 @Injectable()
 export class ControllerTransmissionService implements OnDestroy {
   private readonly state = inject(ControllerStateService);
@@ -17,7 +24,7 @@ export class ControllerTransmissionService implements OnDestroy {
   constructor() {
     effect(() => {
       const connected = this.transport.status() === 'connected';
-      untracked(() => { if (connected) this.loop.start(); else { this.loop.stop(); this.state.resetButtons(); } });
+      untracked(() => syncTransmission(connected, this.loop, this.state));
     });
   }
   ngOnDestroy(): void { this.loop.stop(); this.state.resetButtons(); this.transport.disconnect(); }

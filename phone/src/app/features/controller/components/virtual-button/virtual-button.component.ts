@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, input, OnDestroy, output } from '@angular/core';
 import type { VirtualButtonMode } from '../../../../core/models/controller-button.model';
-import { ButtonInteraction } from '../../utils/button-interaction';
+import { buttonCaption, ButtonInteraction } from '../../utils/button-interaction';
 @Component({
   selector: 'app-virtual-button', standalone: true, changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '(window:blur)': 'cancel()', '(document:visibilitychange)': 'visibilityChanged()' },
@@ -34,7 +34,7 @@ export class VirtualButtonComponent implements OnDestroy {
   readonly pressed = input(false); readonly disabled = input(false);
   /** 'arm' shows ARMED in red while on. */
   readonly kind = input<'arm' | 'default'>('default');
-  readonly caption = computed(() => this.mode() === 'momentary' ? 'HOLD' : this.kind() === 'arm' ? 'TOGGLE' : this.pressed() ? 'ON' : 'OFF');
+  readonly caption = computed(() => buttonCaption(this.mode(), this.pressed()));
   readonly pressedChange = output<boolean>();
   private readonly interaction = new ButtonInteraction(value => this.pressedChange.emit(value));
   constructor() { effect(() => { if (this.disabled()) this.cancel(); }); }
@@ -42,7 +42,7 @@ export class VirtualButtonComponent implements OnDestroy {
     if (event.button !== 0 || this.disabled()) return;
     event.preventDefault();
     const target = event.currentTarget as HTMLButtonElement;
-    this.interaction.press(event.pointerId, this.mode(), false);
+    this.interaction.press(event.pointerId, this.mode(), false, { x: event.clientX, y: event.clientY });
     target.setPointerCapture(event.pointerId);
   }
   up(event: PointerEvent): void {
@@ -51,7 +51,7 @@ export class VirtualButtonComponent implements OnDestroy {
     const rect = target.getBoundingClientRect();
     const inside = event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom;
     if (this.disabled()) this.cancel(event.pointerId);
-    else this.interaction.release(event.pointerId, this.pressed(), inside);
+    else this.interaction.release(event.pointerId, this.pressed(), inside, { x: event.clientX, y: event.clientY });
     if (target.hasPointerCapture(event.pointerId)) target.releasePointerCapture(event.pointerId);
   }
   cancel(pointer?: number): void { this.interaction.cancel(pointer); }
