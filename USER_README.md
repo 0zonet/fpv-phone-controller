@@ -11,13 +11,13 @@ The Setup includes the virtual joystick driver (vJoy 2.2.2.0, signed by Brunner)
 ## Connecting your phone
 
 1. Connect PC and phone to the same Wi-Fi, or enable USB tethering on Android.
-2. Wait for Virtual joystick, WebSocket server and Network to show Ready.
+2. Wait for the Controller and Server chips to show Ready.
 3. Scan the QR with your phone camera and open the link in Chrome.
-4. Allow local-network access if requested. The controller opens automatically and Windows shows Phone: Connected.
+4. Allow local-network access if requested. The controller opens automatically and the Phone chip shows Connected, with live mini sticks and packets per second.
 
 The public PWA is https://fpv.brycofre.com. You need Internet access to open it initially. You can install it from Chrome's menu.
 
-Regenerate QR restarts the connection and invalidates the previous link. Scan the new QR. Copy connection link is an alternative. Advanced contains network selection and the manual WebSocket endpoint.
+New QR restarts the connection and invalidates the previous link. Scan the new QR. Copy link is an alternative. Disconnect phone ends the session from the PC. Advanced contains the PC network selector, the manual WebSocket endpoint (its key is hidden; the copy button copies it complete), the vJoy device, Test joystick, Help and the logs folder.
 
 ## Uncrashed setup
 
@@ -28,19 +28,19 @@ To check Windows first: Advanced > Test joystick opens joy.cpl. X/Y must follow 
 ## Troubleshooting
 
 - Virtual controller needs repair: click Repair driver and accept the Windows permission prompt. It reinstalls the bundled driver and configures the device, then checks again.
-- Joystick occupied: close other feeders and Retry.
+- Joystick occupied: close other feeders and click Check again.
 - Port occupied: click Use another port. The app picks a free port, remembers it and shows a new QR. Or close the other app using the port and Retry.
 - No network: connect Wi-Fi/Ethernet or USB tethering (Open network settings opens Windows network settings); choose the shared network in Advanced.
 - Unable to connect: check both devices share the network, allow local-network access in Chrome and tap Retry. Review Windows private-network firewall permissions. Never disable the firewall or open router ports.
-- Invalid QR: scan the current QR again.
+- Old QR: if a phone uses a QR from a previous session, the window says so. Scan the current QR again.
 - Connection lost: restore the network, lower throttle on the phone and Retry. After restarting Windows companion, scan its new QR.
-- Persistent error: Advanced > Open logs folder. Send the logs and your app version to the person who provided the beta. Logs contain local IPs and technical details; they omit continuous stick values and pairing keys.
+- Persistent error: Logs (bottom of the window) opens the logs folder. Send the logs and your app version to the person who provided the beta. Logs contain local IPs and technical details; they omit continuous stick values and pairing keys.
 
 If packets stop for 250 ms, failsafe resets the controls. Keep the phone app visible. Use only a trusted local network.
 
 ## How to uninstall
 
-Close the companion. Windows Settings > Apps > Installed apps > FPV Phone Controller > Uninstall.
+Close FPV Phone Controller. Windows Settings > Apps > Installed apps > FPV Phone Controller > Uninstall.
 
 Uninstalling FPV Phone Controller does not uninstall vJoy, because other apps may use it. To remove it, uninstall "vJoy Device Driver" from Installed apps. Logs, preferences and the chosen vJoy device remain in %LOCALAPPDATA%/FPVPhoneController; delete that folder manually if desired.
 

@@ -4,7 +4,7 @@ import { resolve, dirname, join, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
-import { vJoyInstaller } from './windows-tools.mjs';
+import { vJoyInstaller, webView2Sdk } from './windows-tools.mjs';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 if (process.platform !== 'win32' || process.arch !== 'x64') throw new Error('Windows x64 is required for this native build.');
 if (Number(process.versions.node.split('.')[0]) !== 24) throw new Error('Build the distribution with Node 24 x64.');
@@ -44,8 +44,14 @@ const windowsVersion = match.slice(1, 4).join('.') + '.' + (match[4] ?? '0');
 await writeFile(assembly, '[assembly:System.Reflection.AssemblyVersion("' + windowsVersion + '")]\n' +
   '[assembly:System.Reflection.AssemblyFileVersion("' + windowsVersion + '")]\n' +
   '[assembly:System.Reflection.AssemblyInformationalVersion("' + version + '")]\n');
+// The window is a WebView2 host for desktop/windows/ui (HTML/CSS/JS, no build step) with the bundled fonts.
+const webView2 = await webView2Sdk(root);
+for (const name of ['Microsoft.Web.WebView2.Core.dll', 'Microsoft.Web.WebView2.WinForms.dll', 'WebView2Loader.dll']) await copyFile(webView2[name], join(output, name));
+await cp(join(root, 'desktop/windows/ui'), join(output, 'ui'), { recursive: true, filter: source => !source.endsWith('demo.js') });
+await cp(join(root, 'phone/public/fonts'), join(output, 'ui/fonts'), { recursive: true, filter: source => !source.endsWith('.txt') });
 execFileSync(csc, ['/nologo', '/target:winexe', '/platform:x64', '/optimize+',
   '/reference:System.Windows.Forms.dll', '/reference:System.Drawing.dll', '/reference:System.Web.Extensions.dll',
+  '/reference:' + webView2['Microsoft.Web.WebView2.Core.dll'], '/reference:' + webView2['Microsoft.Web.WebView2.WinForms.dll'],
   '/win32icon:' + join(root, 'desktop/windows/app.ico'), '/out:' + join(output, 'FPVPhoneController.exe'),
   join(root, 'desktop/windows/CompanionWindow.cs'), join(root, 'desktop/windows/DesktopConfiguration.cs'), assembly], { stdio: 'inherit' });
 await copyFile(join(root, 'USER_README.md'), join(output, 'USER_README.md'));
@@ -57,6 +63,7 @@ await mkdir(join(output, 'licenses'), { recursive: true });
 await copyFile(join(root, 'phone/dist/phone/3rdpartylicenses.txt'), join(output, 'licenses/frontend.txt'));
 await cp(join(root, 'licenses'), join(output, 'licenses'), { recursive: true });
 await copyFile(join(root, 'THIRD_PARTY_NOTICES.md'), join(output, 'THIRD_PARTY_NOTICES.md'));
+await copyFile(webView2['LICENSE.txt'], join(output, 'licenses/WebView2-LICENSE.txt'));
 for (const [source, target] of [['ws/LICENSE', 'ws.txt'], ['koffi/LICENSE.txt', 'koffi.txt']]) {
   try { await copyFile(join(root, 'node_modules', source), join(output, 'licenses', target)); }
   catch { if (source.startsWith('koffi')) await copyFile(join(root, 'node_modules/koffi/LICENSE'), join(output, 'licenses', target)); else throw new Error('Missing dependency license'); }

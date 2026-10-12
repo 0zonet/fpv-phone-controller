@@ -5,7 +5,7 @@ Para la primera beta, el comando completo es npm run release y los artefactos ve
 ## Decisión técnica
 
 Se reutilizan protocolo, ControllerMapper, ControllerSession/failsafe, validación y VJoyController.
-La UI desktop es WinForms compilada con .NET Framework 4.x de Windows 11; no requiere Electron, WebView2 ni descargar otro runtime .NET.
+La ventana es un host WinForms (.NET Framework 4.x de Windows 11, compilado con el csc C# 5 del sistema) que muestra la UI HTML de desktop/windows/ui con WebView2. El Runtime de WebView2 forma parte de Windows 11 y no se redistribuye; se incluyen las DLL del SDK (Microsoft.Web.WebView2.Core/WinForms y WebView2Loader x64, BSD-3-Clause), que el build descarga de NuGet con SHA-256 fijado. No requiere Electron ni otro runtime .NET.
 El backend TypeScript se compila y agrupa con esbuild. Se distribuye Node x64 como runtime privado, junto a Koffi x64. El usuario no instala Node.
 
 Node SEA es una alternativa oficial, pero en este MVP aumenta el trabajo de extracción/carga del addon nativo sin eliminar la necesidad de recursos externos. Tauri añadiría Rust y otro bridge; Electron añade un navegador que esta UI no necesita.
@@ -27,7 +27,7 @@ npm run test:package
 
 Resultados:
 - phone/dist/phone/browser: PWA estática con manifest, iconos, ngsw.json y ngsw-worker.js.
-- dist/windows/FPVPhoneController.exe: ventana nativa.
+- dist/windows/FPVPhoneController.exe: ventana (host WebView2) y dist/windows/ui: su HTML, CSS, JS y fuentes.
 - dist/windows/runtime/companion-engine.exe: runtime incluido.
 - dist/FPVPhoneControllerSetup.exe: instalador para compartir.
 - dist/release.json: metadatos del artefacto.
@@ -84,7 +84,7 @@ Referencias:
 La distribución escucha únicamente en la IPv4 privada seleccionada, no en 0.0.0.0 ni IPv6. Filtra interfaces conocidas de VPN/VM; un nombre desconocido puede necesitar selección manual.
 No añade reglas de firewall silenciosamente. Si hace falta una regla, limitar programa runtime/companion-engine.exe, TCP 8080, Private y LocalSubnet. No abrir puertos del router.
 Rechaza clientes fuera de la subred, origen no autorizado o token incorrecto antes del upgrade WebSocket. Solo se admite un teléfono; se conserva validación estricta, límite de payload y failsafe.
-La clave cambia al reiniciar o cambiar interfaz. El QR y Advanced > Copy connection link contienen el enlace de pairing completo. Advanced muestra la IP, el puerto y el endpoint para conexión manual. Consulta PAIRING.md para el protocolo y las pruebas.
+La clave cambia al reiniciar o cambiar interfaz. El QR y Copy link contienen el enlace de pairing completo. Advanced muestra la IP, el puerto y el endpoint para conexión manual. Consulta PAIRING.md para el protocolo y las pruebas.
 El transporte local ws no cifra el tráfico: solo redes de confianza. El CLI npm run desktop conserva el flujo de desarrollo original y no es el punto de entrada de distribución.
 
 ## Prueba como usuario nuevo

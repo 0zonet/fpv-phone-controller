@@ -19,7 +19,7 @@ PairingService validates the payload. PairingFlowService coordinates saving, con
 
 ## Desktop
 
-npm run desktop starts the development console server. The distributed entry is desktop/src/distribution/windows-entry.ts and the UI is desktop/windows/CompanionWindow.cs.
+npm run desktop starts the development console server. The distributed entry is desktop/src/distribution/windows-entry.ts. The window is desktop/windows/CompanionWindow.cs, a WinForms host (system csc, C# 5; async/await works) for a WebView2 that shows desktop/windows/ui (plain HTML/CSS/ES modules, no build step). The host forwards each backend stdout line with PostWebMessageAsJson and runs the page's {cmd} messages (copy-link, new-qr, repair, use-port, disconnect-phone, select-network…). ui/view-model.js maps status → chips and screens and has node:test specs. The caption is the native one painted dark with DwmSetWindowAttribute. Design preview without the app: serve desktop/windows/ui with phone/public/fonts copied to ui/fonts and open index.html?demo=qr|connected|vjoy|port|network|pairing|startup|advanced (demo.js is not shipped). FPV_DEVTOOLS=1 enables WebView2 DevTools. --self-test loads the real UI off-screen, feeds status lines and checks what it renders.
 
 Health checks report driver/device, actual port binding/WebSocket listening, private IP selection and QR generation. Driver failures map to user messages; technical details go to logs. A missing network leaves dependent checks Not checked. Firewall reachability is not asserted: a waiting hint suggests permissions after 45 seconds.
 

@@ -22,6 +22,28 @@ export async function vJoyInstaller(root) {
   await writeFile(installer, content);
   return installer;
 }
+const webView2 = { version: '1.0.4191.47',
+  url: 'https://api.nuget.org/v3-flatcontainer/microsoft.web.webview2/1.0.4191.47/microsoft.web.webview2.1.0.4191.47.nupkg',
+  sha256: 'f492bbf547d0da329553b6727435b677579b1e9f91cc9e4a1ad029366d5f23d0',
+  files: ['lib/net462/Microsoft.Web.WebView2.Core.dll', 'lib/net462/Microsoft.Web.WebView2.WinForms.dll', 'runtimes/win-x64/native/WebView2Loader.dll', 'LICENSE.txt'] };
+/** Official Microsoft.Web.WebView2 NuGet package (BSD-3-Clause), pinned by SHA-256 and extracted to .tools. Never committed. */
+export async function webView2Sdk(root) {
+  const cache = join(root, '.tools', 'webview2-' + webView2.version);
+  const result = Object.fromEntries(webView2.files.map(file => [file.split('/').pop(), join(cache, ...file.split('/'))]));
+  try { for (const file of Object.values(result)) await access(file); return result; } catch {}
+  console.log('Downloading WebView2 SDK ' + webView2.version + ' from nuget.org');
+  const response = await fetch(webView2.url);
+  if (!response.ok) throw new Error('Cannot download the WebView2 SDK package.');
+  const content = Buffer.from(await response.arrayBuffer());
+  if (createHash('sha256').update(content).digest('hex') !== webView2.sha256) throw new Error('WebView2 SDK SHA-256 mismatch.');
+  await mkdir(cache, { recursive: true });
+  const archive = join(cache, 'webview2.zip');
+  await writeFile(archive, content);
+  // Windows 10+ ships bsdtar, which reads .zip (.nupkg) archives.
+  execFileSync(join(process.env.WINDIR ?? 'C:/Windows', 'System32', 'tar.exe'), ['-xf', archive, '-C', cache, ...webView2.files], { stdio: 'inherit' });
+  for (const file of Object.values(result)) await access(file);
+  return result;
+}
 export async function windowsCompiler(root) {
   if (process.env.ISCC_PATH) { await access(process.env.ISCC_PATH); return process.env.ISCC_PATH; }
   const cache = join(root, '.tools', 'inno-' + version);

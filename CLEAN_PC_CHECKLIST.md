@@ -10,8 +10,8 @@ Record product version, Windows edition/build, phone model, Android version, Chr
 - [ ] On a PC with vJoy 2.2.2.0 and a suitable device 1, the Setup shows no UAC prompt.
 - [ ] With device 1 configured differently (for example 2 axes, 4 buttons), the Setup keeps device 1 unchanged and creates the first free device with X, Y, Z, Slider and 8 buttons.
 - [ ] Cancel the UAC prompt: the app still installs and shows Repair driver; Repair driver then fixes it.
-- [ ] Open the companion: Virtual joystick, WebSocket server, Network and Advanced checks become Ready.
-- [ ] Verify first-run instructions. Hide them with Got it; reopen the app and verify they stay hidden. Advanced > Show instructions restores them.
+- [ ] Open the app: dark window (dark title bar), Controller and Server chips Ready, Phone Waiting, QR visible. Text is sharp at 100 %, 125 % and 150 % display scaling.
+- [ ] Advanced shows "How it works", network selector, IP, port, masked endpoint (copy button copies the full endpoint), vJoy driver and device, Test joystick, Help, Open logs folder and Third-party licenses.
 - [ ] Connect phone and PC to the same Wi-Fi or USB tethering. Choose the correct network in Advanced if necessary.
 - [ ] Scan the QR; Chrome opens the HTTPS PWA. Allow local-network access if prompted. No typing or copying an endpoint is required.
 - [ ] Verify Phone: Connected and usable sticks.
@@ -19,8 +19,9 @@ Record product version, Windows edition/build, phone model, Android version, Chr
 - [ ] In joy.cpl verify ARM → Button 1, RESET → Button 2 while held, AUX 1/2 → Buttons 3/4. Disconnect with toggles ON and confirm every button releases; reconnect with toggles OFF. Verify button presses and both sticks work simultaneously.
 - [ ] In Uncrashed select vJoy Device, assign by individual axis movement and run Stick calibration. Confirm all four axes are independent.
 - [ ] Stop/lose phone connectivity: verify connection-lost message and failsafe resets the joystick (throttle minimum, other axes center). Lower phone throttle and Retry.
-- [ ] Regenerate QR: verify the previous connection closes, the new QR differs, the new scan connects and the old link no longer authorizes.
-- [ ] Test Copy connection link and Advanced manual fallback.
+- [ ] New QR: verify the previous connection closes, the new QR differs, the new scan connects and the old link no longer authorizes.
+- [ ] Test Copy link and the manual endpoint (phone Settings > Conexión). With the phone connected, the mini sticks follow the phone; Disconnect phone shows "disconnected" on the phone.
+- [ ] Scan an old QR after New QR: the window shows "Your phone used an old QR".
 - [ ] Test an invalid QR link: a friendly error offers Manual connection; no invalid endpoint is opened.
 - [ ] Close another feeder if the virtual joystick is occupied; verify the actionable message and recovery with Retry.
 - [ ] Disconnect network/retry: verify no-network message. Restore it and Retry.

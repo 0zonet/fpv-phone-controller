@@ -4,7 +4,7 @@ FPV Phone Controller redistribuye los componentes de abajo. Los textos completos
 
 Auditoría: 2026-10-12, versión `0.4.0-beta.2`. Se generó a partir de lo que **realmente se distribuye**: el `3rdpartylicenses.txt` de Angular para la PWA, el metafile de esbuild para el backend (`desktop/src/distribution/windows-entry.ts`) y los archivos que copia `scripts/build-desktop.mjs`. Las herramientas de build y test que no se distribuyen aparecen al final.
 
-**Resultado: todas las dependencias distribuidas tienen licencias permisivas (MIT, Apache-2.0, 0BSD, OFL-1.1, Inno Setup License; vJoy es MIT). Ninguna es GPL, LGPL, AGPL ni source-available, y ninguna impide cobrar, pedir donaciones ni vender el producto.**
+**Resultado: todas las dependencias distribuidas tienen licencias permisivas (MIT, Apache-2.0, 0BSD, BSD-3-Clause, OFL-1.1, Inno Setup License; vJoy es MIT). Ninguna es GPL, LGPL, AGPL ni source-available, y ninguna impide cobrar, pedir donaciones ni vender el producto.**
 
 ## PWA (`phone/`, desplegada en Vercel y copiada en `{app}\phone`)
 
@@ -41,7 +41,13 @@ Sobre koffi: versiones antiguas de koffi se publicaron con LGPL; la 3.3.2 que se
 
 ## Ventana de Windows (`FPVPhoneController.exe`)
 
-Compilada con el `csc.exe` de .NET Framework 4.x. Solo usa ensamblados de .NET Framework que forman parte de Windows (`System.Windows.Forms`, `System.Drawing`, `System.Web.Extensions`), que no se redistribuyen. No hay dependencias de terceros.
+Compilada con el `csc.exe` de .NET Framework 4.x. Usa ensamblados de .NET Framework que forman parte de Windows (`System.Windows.Forms`, `System.Drawing`, `System.Web.Extensions`), que no se redistribuyen, y el SDK de WebView2 para mostrar la UI HTML (`{app}\ui`, con las mismas fuentes OFL de la PWA).
+
+| Componente | Versión | Licencia | URL | Cómo se distribuye |
+|---|---|---|---|---|
+| Microsoft.Web.WebView2 SDK (`Microsoft.Web.WebView2.Core.dll`, `Microsoft.Web.WebView2.WinForms.dll`, `WebView2Loader.dll` x64) | 1.0.4191.47 | BSD-3-Clause (© Microsoft) | https://www.nuget.org/packages/Microsoft.Web.WebView2 | DLL firmadas por Microsoft junto al exe; licencia en `licenses\WebView2-LICENSE.txt` |
+
+El Runtime de WebView2 (Edge) viene con Windows 11 y no se redistribuye.
 
 ## Driver de joystick virtual (`{app}\vjoy\`)
 
@@ -62,7 +68,6 @@ El `license.txt` incluido con Inno Setup 7.1.0 permite expresamente el uso comer
 ## Pendiente en fases posteriores
 
 Se añadirán a este archivo cuando entren en el producto:
-- **WebView2 SDK** (fase 5, si la prueba técnica sale bien): `Microsoft.Web.WebView2.Core.dll`, `…WinForms.dll` y `WebView2Loader.dll`, con licencia BSD-3-Clause de Microsoft. El Runtime de WebView2 viene con Windows 11 y no se redistribuye.
 - **jsQR** (fase 7, fallback del escáner QR): Apache-2.0. Hoy solo es devDependency de `scripts/test-package.mjs` y no se distribuye.
 
 ## Herramientas de build y test (no se distribuyen)

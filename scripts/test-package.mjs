@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawn, spawnSync, execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { readFile, writeFile, rm } from 'node:fs/promises';
+import { access, readFile, writeFile, rm } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { createServer } from 'node:net';
 import { join, resolve, dirname } from 'node:path';
@@ -16,10 +16,15 @@ const directory = join(root, 'dist/windows');
 const dataDirectory = join(root, 'work/package-test-' + Date.now());
 const require = createRequire(join(directory, 'companion.cjs'));
 assert.equal(typeof require('koffi').load, 'function');
-execFileSync(join(directory, 'FPVPhoneController.exe'), ['--self-test'], { timeout: 10000, env: { ...process.env, FPV_DATA_DIR: dataDirectory } });
+execFileSync(join(directory, 'FPVPhoneController.exe'), ['--self-test'], { timeout: 40000, env: { ...process.env, FPV_DATA_DIR: dataDirectory } });
 const vJoySetup = await readFile(join(directory, 'vjoy/vJoySetup_v2.2.2.0_Win10_Win11.exe'));
 assert.equal(createHash('sha256').update(vJoySetup).digest('hex'), 'ef569a3105cd301b89580f18f60c66b339e95296acf2c0dfcaf4b4bbf8ab68fe');
 assert.match(await readFile(join(directory, 'licenses/vJoy-LICENSE.txt'), 'utf8'), /MIT License/);
+// WebView2 window: SDK DLLs next to the exe, the HTML UI and its self-hosted fonts (no network needed).
+for (const file of ['Microsoft.Web.WebView2.Core.dll', 'Microsoft.Web.WebView2.WinForms.dll', 'WebView2Loader.dll', 'ui/index.html', 'ui/app.js', 'ui/view-model.js', 'ui/app.css',
+  'ui/fonts/urbanist-latin-wght-normal.woff2', 'ui/fonts/doto-latin-wght-normal.woff2', 'ui/fonts/martian-mono-latin-wght-normal.woff2']) await access(join(directory, file));
+await assert.rejects(access(join(directory, 'ui/demo.js')));
+assert.match(await readFile(join(directory, 'licenses/WebView2-LICENSE.txt'), 'utf8'), /Redistribution and use in source and binary forms/);
 // Probe never elevates: 0 = fitting device recorded, 10 = installer/Repair driver must run elevated.
 const vJoyProbe = spawnSync(join(directory, 'runtime/companion-engine.exe'), [join(directory, 'vjoy-setup.cjs'), '--probe', '--state-dir', dataDirectory], { timeout: 30000, windowsHide: true });
 assert.ok([0, 10].includes(vJoyProbe.status), 'vJoy probe exit ' + vJoyProbe.status);
@@ -75,7 +80,7 @@ try {
   assert.equal(state.version, JSON.parse(await readFile(join(root, 'package.json'), 'utf8')).version);
   const fixture = join(dataDirectory, 'status-fixture.json');
   await writeFile(fixture, JSON.stringify(state));
-  try { execFileSync(join(directory, 'FPVPhoneController.exe'), ['--self-test', fixture], {timeout:10000, env: { ...process.env, FPV_DATA_DIR: dataDirectory }}); }
+  try { execFileSync(join(directory, 'FPVPhoneController.exe'), ['--self-test', fixture], {timeout:40000, env: { ...process.env, FPV_DATA_DIR: dataDirectory }}); }
   finally { await rm(fixture); }
   const link = new URL(state.pairingUrl);
   assert.equal(link.pathname, '/connect');
